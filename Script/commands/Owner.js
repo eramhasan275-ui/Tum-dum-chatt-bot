@@ -3,10 +3,10 @@ const fs = require("fs-extra");
 
 module.exports.config = {
   name: "owner",
-  version: "1.0.1",
+  version: "2.0.0",
   hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
-  description: "Show Owner Info with styled box & random photo",
+  credits: "Eram",
+  description: "Show Tum Dum Owner Info with styled box & random photo",
   commandCategory: "Information",
   usages: "owner",
   cooldowns: 2
@@ -14,30 +14,28 @@ module.exports.config = {
 
 module.exports.run = async function ({ api, event }) {
 
-  
   const info = `
 ╔═════════════════════ ✿
 ║ ✨ 𝗢𝗪𝗡𝗘𝗥 𝗜𝗡𝗙𝗢 ✨
 ╠═════════════════════ ✿
-║ 👑 𝗡𝗮𝗺𝗲 : 𝗦𝗛𝗔𝗛𝗔𝗗𝗔𝗧 𝗦𝗔𝗛𝗨
-║ 🧸 𝗡𝗶𝗰𝗸 𝗡𝗮𝗺𝗲 : 𝗦𝗔𝗛𝗨
-║ 🎂 𝗔𝗴𝗲 : 𝟭𝟴+
-║ 💘 𝗥𝗲𝗹𝗮𝘁𝗶𝗼𝗻 : 𝗦𝗶𝗻𝗴𝗹𝗲
+║ 👑 𝗡𝗮𝗺𝗲 : 𝗘𝗿𝗮𝗺
+║ 🧸 𝗡𝗶𝗰𝗸 𝗡𝗮𝗺𝗲 : 𝗔𝗹𝗱𝗶𝗲
 ║ 🎓 𝗣𝗿𝗼𝗳𝗲𝘀𝘀𝗶𝗼𝗻 : 𝗦𝘁𝘂𝗱𝗲𝗻𝘁
 ║ 📚 𝗘𝗱𝘂𝗰𝗮𝘁𝗶𝗼𝗻 : 𝗛𝗦𝗖
-║ 🏡 𝗔𝗱𝗱𝗿𝗲𝘀𝘀 : 𝗞𝗵𝗮𝗴𝗿𝗮𝗰𝗵𝗮𝗿𝗶
 ╠═════════════════════ ✿
-║ 🔗 𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗟𝗜𝗡𝗞𝗦
+║ 🤖 𝗕𝗢𝗧 𝗜𝗡𝗙𝗢
 ╠═════════════════════ ✿
-║ 📘 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :
-║ fb.com/100044713412032
-║ 💬 𝗠𝗲𝘀𝘀𝗲𝗻𝗴𝗲𝗿 :
-║ m.me/100044713412032
+║ 🤖 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲 : 𝗧𝘂𝗺 𝗗𝘂𝗺
+║ 👑 𝗢𝘄𝗻𝗲𝗿 : 𝗘𝗿𝗮𝗺
+╠═════════════════════ ✿
+║ 🔗 𝗖𝗢𝗡𝗧𝗔𝗖𝗧
+╠═════════════════════ ✿
 ║ 📞 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :
-║ wa.me/01882333052
-║ ✈️ 𝗧𝗲𝗹𝗲𝗴𝗿𝗮𝗺 :
-║ t.me/yoursahu
+║ wa.me/8801922361823
 ╚═════════════════════ ✿
+
+❤️ 𝗧𝗵𝗮𝗻𝗸𝘀 𝗳𝗼𝗿 𝘂𝘀𝗶𝗻𝗴
+🤖 𝗧𝘂𝗺 𝗗𝘂𝗺 𝗕𝗼𝘁
 `;
 
   const images = [
@@ -47,18 +45,39 @@ module.exports.run = async function ({ api, event }) {
     "https://i.imgur.com/5dG8PS5.jpeg"
   ];
 
-  const randomImg = images[Math.floor(Math.random() * images.length)];
+  const randomImg =
+    images[Math.floor(Math.random() * images.length)];
 
-  const callback = () => api.sendMessage(
-    {
-      body: info,
-      attachment: fs.createReadStream(__dirname + "/cache/owner.jpg")
-    },
-    event.threadID,
-    () => fs.unlinkSync(__dirname + "/cache/owner.jpg")
-  );
+  const cacheDir = __dirname + "/cache";
+  const imagePath = cacheDir + "/owner.jpg";
+
+  fs.ensureDirSync(cacheDir);
+
+  const callback = () => {
+    if (!fs.existsSync(imagePath)) {
+      return api.sendMessage(
+        info.trim(),
+        event.threadID,
+        event.messageID
+      );
+    }
+
+    return api.sendMessage(
+      {
+        body: info.trim(),
+        attachment: fs.createReadStream(imagePath)
+      },
+      event.threadID,
+      () => {
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      },
+      event.messageID
+    );
+  };
 
   return request(encodeURI(randomImg))
-    .pipe(fs.createWriteStream(__dirname + "/cache/owner.jpg"))
-    .on("close", () => callback());
+    .pipe(fs.createWriteStream(imagePath))
+    .on("close", callback);
 };
