@@ -1,303 +1,424 @@
-const axios = require("axios");
-
-const apiList = "https://gitlab.com/shahadat-sahu/sahu-api/-/raw/main/API.json";
-const getMainAPI = async () => (await axios.get(apiList)).data.simsimi;
+/**
+ * Tum Dum - Manual Smart Baby Chat
+ * Owner: Eram
+ *
+ * No External API
+ */
 
 module.exports.config = {
- name: "baby",
- version: "1.0.3",
- hasPermssion: 0,
- credits: "ULLASH",
- description: "Cute AI Baby Chatbot | Talk, Teach & Chat with Emotion ☢️",
- commandCategory: "Chat",
- usages: "[message/query]",
- cooldowns: 0,
- prefix: true
+  name: "baby",
+  version: "3.0.0",
+  hasPermssion: 0,
+  credits: "Eram",
+  description: "Manual smart chatbot with Bangla & English replies",
+  commandCategory: "Chat",
+  usages: "[message/query]",
+  cooldowns: 0,
+  prefix: true
 };
 
-module.exports.run = async function ({ api, event, args, Users }) {
- try {
- const uid = event.senderID;
- const senderName = await Users.getNameUser(uid);
- const rawQuery = args.join(" ");
- const query = rawQuery.toLowerCase();
- const simsim = await getMainAPI();
+const replies = [
+  "বেশি বেশি ডাকলে কিন্তু আমি লজ্জা পেয়ে যাবো 🙈",
+  "হ্যাঁ বলো, তোমার জন্য কী করতে পারি? 🙂",
+  "এতো ডাকছো কেন? আমি তো শুনছিই 😌",
+  "বলো, কী বলতে চাও? 🌿",
+  "আসসালামু আলাইকুম 🌸 বলো, কী খবর?",
+  "আজ কেমন আছো? 😊",
+  "আমি আছি, তুমি বলো। 🤍",
+  "এতো মেনশন না করে সরাসরি বলো কী হয়েছে 😄",
+  "হুম বলো, শুনছি। 👀",
+  "তোমার কথা মনোযোগ দিয়ে শুনছি। 🙂",
+  "কী ব্যাপার? আমাকে মনে পড়লো নাকি? 😌",
+  "বলো, আমি এখানেই আছি। 🌱",
+  "ডাকলে যখন, কিছু একটা বলতেই হবে কিন্তু 😄",
+  "আমি প্রস্তুত, বলো শুরু করো। 😌",
+  "কী খবর তোমার? 🌿",
+  "আজকের দিনটা কেমন গেল?",
+  "মন খারাপ নাকি? চাইলে আমার সাথে কথা বলতে পারো। 🤍",
+  "হাসো একটু, জীবনটা সুন্দর। 😊",
+  "চুপচাপ কেন? কিছু বলো। 🙂",
+  "আমি কিন্তু তোমার কথা শুনতে প্রস্তুত। 👀",
+  "বলো, কী নিয়ে গল্প করবে আজ?",
+  "তোমার মেসেজ পেয়েছি। 😌",
+  "হুমম... বলো, শুনছি। 🌸"
+];
 
- if (!query) {
- const ran = ["Bolo baby", "hum"];
- const r = ran[Math.floor(Math.random() * ran.length)];
- return api.sendMessage(r, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: event.senderID,
- type: "simsimi"
- });
- }
- });
- }
+const fallbackReplies = [
 
- const command = args[0].toLowerCase();
+  "হুম, বুঝলাম। 🙂",
+  "আচ্ছা, তারপর? 👀",
+  "ঠিক আছে। 😌",
+  "বুঝতে পারছি। 🌿",
+  "হুমম... interesting! 😄",
+  "আরও একটু বিস্তারিত বলো।",
+  "ওহ, তাই নাকি? 👀",
+  "আচ্ছা বলো, শুনছি।",
+  "ঠিক আছে, তোমার কথাটা মনে রাখলাম। 🙂",
 
- if (["remove", "rm"].includes(command)) {
- const parts = rawQuery.replace(/^(remove|rm)\s*/i, "").split(" - ");
- if (parts.length < 2) return api.sendMessage("Use: remove [Question] - [Reply]", event.threadID, event.messageID);
- const [ask, ans] = parts.map(p => p.trim());
- const res = await axios.get(`${simsim}/delete?ask=${encodeURIComponent(ask)}&ans=${encodeURIComponent(ans)}`);
- return api.sendMessage(res.data.message, event.threadID, event.messageID);
- }
+  "হুম, তারপর কী হলো? 😌",
+  "বাহ, বেশ interesting কথা! 👀",
+  "আচ্ছা, বুঝলাম। তুমি চালিয়ে যাও। 🌿",
+  "হুমম... এই ব্যাপারটা একটু interesting লাগছে। 😄",
+  "সত্যি নাকি? 🤔",
+  "ওহ! ব্যাপারটা মজার তো। 😂",
+  "আচ্ছা, এটা শুনে ভালো লাগলো। 🤍",
+  "হুম, তোমার কথার যুক্তি আছে। 🙂",
+  "ঠিক বলেছো। 😌",
+  "একদম! আমিও তাই ভাবছিলাম। 🌸",
 
- if (command === "list") {
- const res = await axios.get(`${simsim}/list`);
- if (res.data.code === 200) {
- return api.sendMessage(
- `♾ Total Questions Learned: ${res.data.totalQuestions}\n★ Total Replies Stored: ${res.data.totalReplies}\nDeveloper: ${res.data.author}`,
- event.threadID, event.messageID
- );
- } else return api.sendMessage(`Error: ${res.data.message}`, event.threadID, event.messageID);
- }
+  "আজ তোমার mood কেমন? 😄",
+  "এখন কী নিয়ে ব্যস্ত আছো?",
+  "চলো একটু গল্প করি। ☕",
+  "অনেকদিন পর এমন কথা শুনলাম। 😌",
+  "তুমি কিন্তু বেশ interesting মানুষ। 👀",
+  "তোমার কথা শুনতে খারাপ লাগছে না। 😄",
+  "হুম, তোমার সাথে কথা জমছে। 🌿",
+  "আরও বলো, গল্পটা শুনতে চাই।",
+  "তারপর? আমি কিন্তু শুনছি। 👂",
+  "বলো, conversation চালু থাকুক। 🙂",
 
- if (command === "edit") {
- const parts = rawQuery.replace(/^edit\s*/i, "").split(" - ");
- if (parts.length < 3) return api.sendMessage("Use: edit [Q] - [Old] - [New]", event.threadID, event.messageID);
- const [ask, oldReply, newReply] = parts.map(p => p.trim());
- const res = await axios.get(`${simsim}/edit?ask=${encodeURIComponent(ask)}&old=${encodeURIComponent(oldReply)}&new=${encodeURIComponent(newReply)}`);
- return api.sendMessage(res.data.message, event.threadID, event.messageID);
- }
+  "এটা নিয়ে তুমি কী ভাবো?",
+  "তোমার opinion কী?",
+  "হুম, এটার উত্তর দেওয়া একটু কঠিন। 🤔",
+  "একটু ভেবে বলছি... 😌",
+  "ভালো প্রশ্ন করেছো। 👀",
+  "এই প্রশ্নটা কিন্তু সহজ না। 😄",
+  "হুম, interesting question!",
+  "এটা নিয়ে বেশ ভালো একটা আলোচনা করা যায়। 🌿",
 
- if (command === "teach") {
- const parts = rawQuery.replace(/^teach\s*/i, "").split(" - ");
- if (parts.length < 2) return api.sendMessage("Use: teach [Q] - [Reply]", event.threadID, event.messageID);
- const [ask, ans] = parts.map(p => p.trim());
- const groupID = event.threadID;
- let groupName = event.threadName ? event.threadName : "";
- try {
- if (!groupName && groupID != uid) {
- const threadInfo = await api.getThreadInfo(groupID);
- if (threadInfo?.threadName) groupName = threadInfo.threadName;
- }
- } catch {}
+  "ভালো থেকো, আর positive থেকো। 🤍",
+  "সবকিছু সময়ের সাথে ঠিক হয়ে যায়। 🌱",
+  "নিজের ওপর বিশ্বাস রাখো। 💪",
+  "ধীরে চললেও সমস্যা নেই, থেমে যেও না। 🌿",
+  "আজকের ছোট চেষ্টা কাল বড় ফল দিতে পারে। ✨",
+  "হাল ছেড়ো না। তুমি যতটা ভাবছো তার চেয়েও বেশি পারো। 💪",
+  "নিজেকে অন্য কারও সাথে compare করো না। 🙂",
+  "নিজের পথে নিজের মতো করে এগিয়ে যাও। 🤍",
 
- let teachUrl = `${simsim}/teach?ask=${encodeURIComponent(ask)}&ans=${encodeURIComponent(ans)}&senderID=${uid}&senderName=${encodeURIComponent(senderName)}&groupID=${encodeURIComponent(groupID)}`;
- if (groupName) teachUrl += `&groupName=${encodeURIComponent(groupName)}`;
- const res = await axios.get(teachUrl);
- return api.sendMessage(res.data.message, event.threadID, event.messageID);
- }
+  "হাসতে ভুলে যেও না। 😊",
+  "একটু relax করো, সবকিছু নিয়ে বেশি চিন্তা করো না। 🌿",
+  "জীবন সবসময় perfect হয় না, তবুও সুন্দর। 🤍",
+  "কিছু কথা সময়ের সাথে বুঝতে হয়। 😌",
+  "সব উত্তর এখনই জানা জরুরি নয়।",
+  "কখনো কখনো চুপ থাকাটাও একটা উত্তর। 🌸",
 
- const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(query)}&senderName=${encodeURIComponent(senderName)}`);
- const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
+  "হুম 😌",
+  "আচ্ছা 😄",
+  "ওকে 👀",
+  "বুঝলাম 🙂",
+  "সেটাই তো! 😌",
+  "হুমম... 🤔",
+  "আচ্ছা, ঠিক আছে। 🌿",
+  "ওহ! 😮",
+  "বাহ! 😄",
+  "সত্যি? 👀",
+  "তারপর বলো। 🙂",
+  "চালিয়ে যাও। 😌",
+  "আমি শুনছি। 🤍",
+  "বলো, থামলে কেন? 😄",
 
- for (const rep of replies) {
- await new Promise(resolve => {
- api.sendMessage(rep, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: event.senderID,
- type: "simsimi"
- });
- }
- resolve();
- }, event.messageID);
- });
- }
+  "আমার মনে হয় তুমি একটু বেশি ভাবছো। 😄",
+  "এত সিরিয়াস হওয়ার কিছু নেই। 😌",
+  "Relax, সব ঠিক হয়ে যাবে। 🌿",
+  "এই কথাটা কিন্তু মনে রাখার মতো। 👀",
+  "হুম, কথাটা মন্দ না। 🙂",
+  "তোমার কথা শুনে আমারও ভাবতে হচ্ছে। 🤔",
+  "এটা নিয়ে পরে আবার কথা বলবো। 😌",
 
- } catch (err) {
- return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
- }
+  "তুমি কি আজ অনেক কথা বলবে নাকি? 😂",
+  "আজ দেখি তোমার কথার শেষ নেই। 😄",
+  "আমাকে তো আজকে বেশ ব্যস্ত রাখছো। 😂",
+  "ঠিক আছে, আজ তোমার গল্পই শুনবো। 😌",
+  "তোমার সাথে আড্ডা দিতে মন্দ লাগছে না। ☕",
+  "চলো, আজ একটু জমিয়ে আড্ডা দিই। 😄",
+
+  "একটা কথা বলি? নিজের যত্ন নিও। 🤍",
+  "সময়মতো খাওয়া-দাওয়া করো। 🌿",
+  "রাত জেগে থেকো না, ঘুমও দরকার। 😴",
+  "নিজের শরীর আর মন—দুটোরই যত্ন নিও। 🤍",
+
+  "হুম, কথাটা interesting... কিন্তু তোমার কাছ থেকে আরও শুনতে চাই। 👀",
+  "আচ্ছা, আমি এখন curious হয়ে গেছি। তারপর কী? 😄",
+  "এই গল্পের পরের অংশ কোথায়? 😂",
+  "শুধু এতটুকু বললে হবে? পুরোটা বলো। 😌",
+  "হুমম... মনে হচ্ছে এখানে আরও একটা story আছে। 👀",
+
+  "তুমি আমাকে পরীক্ষা নিচ্ছো নাকি? 😂",
+  "এই প্রশ্নের জন্য আমাকে একটু সময় দাও। 😄",
+  "আমাকে এমন প্রশ্ন করো না, আমি কিন্তু ভাবতে বসে যাবো। 😂",
+  "হুম, এবার তুমি আমাকে ভাবিয়ে দিলে। 🤔",
+
+  "তোমার সাথে কথা বলতে ভালোই লাগছে। 🤍",
+  "আড্ডাটা চালু রাখো। 🌸",
+  "আমি কিন্তু conversation ছেড়ে যাচ্ছি না। 😌",
+  "বলো, আজ কী নিয়ে আলোচনা হবে?",
+  "তোমার next message-এর অপেক্ষায় আছি। 👀",
+
+  "আল্লাহ তোমার মঙ্গল করুন। 🤍",
+  "ভালো থেকো, সুস্থ থেকো। 🌿",
+  "আল্লাহ হাফেজ। ❤️",
+  "সবসময় ভালো থাকার চেষ্টা করো। 🤍"
+];
+
+function random(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function getQuery(body) {
+  return body
+    .replace(
+      /^(baby|bot|bby|jan|xan|জান|বট|বেবি)\s*/i,
+      ""
+    )
+    .trim()
+    .toLowerCase();
+}
+
+function getReply(query) {
+
+  if (!query) {
+    return random(replies);
+  }
+
+  // Salam
+  if (
+    /সালাম|আসসালামু আলাইকুম|assalamu alaikum/i.test(query)
+  ) {
+    return random([
+      "ওয়ালাইকুমুস সালাম ওয়া রহমাতুল্লাহি ওয়া বারাকাতুহু 🤍🌿",
+      "ওয়ালাইকুমুস সালাম 🤍 কেমন আছেন?",
+      "ওয়ালাইকুমুস সালাম 🌸 বলুন, কী খবর?"
+    ]);
+  }
+
+  // Greetings
+  if (
+    /^(hi|hello|hey|হাই|হ্যালো|হেলো|হেই)$/.test(query)
+  ) {
+    return random([
+      "হাই 😊 কেমন আছো?",
+      "হ্যালো 🌸 বলো, কী খবর?",
+      "হাই! তোমার সাথে কথা বলতে প্রস্তুত। 😌",
+      "হ্যালো 👀 আজ কেমন আছো?"
+    ]);
+  }
+
+  // How are you
+  if (
+    /কেমন আছ|কেমন আছেন|how are you|kmn acho|kmn aso|কেমন আছো/i.test(query)
+  ) {
+    return random([
+      "আলহামদুলিল্লাহ, ভালো আছি। তুমি কেমন আছো? 😊",
+      "আলহামদুলিল্লাহ ভালো আছি। তোমার খবর কী? 🌿",
+      "ভালো আছি। তোমার সাথে কথা বলছি তো, আরও ভালো লাগছে। 😌",
+      "আলহামদুলিল্লাহ ভালো। আজ তোমার দিন কেমন গেল?"
+    ]);
+  }
+
+  // Name
+  if (
+    /তোমার নাম|নাম কি|নাম কী|what is your name|who are you/i.test(query)
+  ) {
+    return "আমার নাম Tum Dum 🤖 আর আমাকে তৈরি করেছেন Eram। ❤️";
+  }
+
+  // Owner / Creator
+  if (
+    /owner|ওনার|মালিক|কে বানিয়েছে|কে বানাইছে|কে তৈরি করেছে|creator|developer|ডেভেলপার/i.test(query)
+  ) {
+    return "আমাকে তৈরি করেছেন Eram। 👑🤖";
+  }
+
+  // Bot
+  if (
+    /তুমি কি বট|তুমি বট|are you a bot|bot নাকি|তুমি কে/i.test(query)
+  ) {
+    return "হ্যাঁ, আমি Tum Dum 🤖 তবে চেষ্টা করি সুন্দরভাবে কথা বলতে। 😌";
+  }
+
+  // Love
+  if (
+    /ভালোবাসি|love you|i love you|ভালবাসি|লাভ ইউ/i.test(query)
+  ) {
+    return random([
+      "আহা! এত ভালোবাসা কোথা থেকে আসে? 🙈❤️",
+      "হুম, কথাটা শুনে ভালো লাগলো। 🤍",
+      "ভালোবাসা সুন্দর, তবে সম্মানটা আরও সুন্দর। 🌸",
+      "এত ভালোবাসা দিলে আমি কিন্তু লজ্জা পেয়ে যাবো। 🙈"
+    ]);
+  }
+
+  // Thanks
+  if (
+    /ধন্যবাদ|thanks|thank you|tnx|থ্যাংকস/i.test(query)
+  ) {
+    return random([
+      "You're welcome 😊",
+      "সমস্যা নেই। 🤍",
+      "সবসময় আছি। 🌿",
+      "ধন্যবাদ দেওয়ার কিছু নেই। 😌"
+    ]);
+  }
+
+  // Good
+  if (
+    /ভালো|ভাল|great|good|দারুণ|চমৎকার|nice/i.test(query)
+  ) {
+    return random([
+      "শুনে ভালো লাগলো। 😊",
+      "দারুণ! এভাবেই ভালো থেকো। 🌿",
+      "সেটাই তো চাই। 🤍",
+      "বাহ, এটা শুনে Tum Dum-ও খুশি। 😄"
+    ]);
+  }
+
+  // Okay
+  if (
+    /ঠিক আছি|ঠিক আছে|আচ্ছা|okay|ok|thik achi|ওকে/i.test(query)
+  ) {
+    return random([
+      "ঠিক আছে। 😊",
+      "আচ্ছা, বুঝলাম। 😌",
+      "ওকে, তাহলে ভালো। 🌿",
+      "ঠিক আছে, তাহলে গল্প চালিয়ে যাও। 😄"
+    ]);
+  }
+
+  // What doing
+  if (
+    /কি কর|কী কর|what are you doing|ki koro|ki korcho/i.test(query)
+  ) {
+    return random([
+      "তোমাদের সাথেই তো কথা বলছি। 😌",
+      "এখন তোমার মেসেজের উত্তর দিচ্ছি। 🤖",
+      "নতুন কিছু বলার অপেক্ষায় আছি। 🌿",
+      "তোমার সাথে আড্ডা দিচ্ছি। 😄"
+    ]);
+  }
+
+  // Joke
+  if (
+    /জোক|জোকস|joke|jokes|কৌতুক/i.test(query)
+  ) {
+    return random([
+      "স্যার: বল তো, পড়াশোনা আর ঘুমের মধ্যে কোনটা বেশি জরুরি?\nছাত্র: দুটোই স্যার, তাই বই মাথার নিচে রেখে ঘুমাই! 😂",
+      "বন্ধু: তুই এত চুপচাপ কেন?\nআমি: Wi-Fi নেই, তাই কথা বলার শক্তিও নেই! 😂",
+      "পরীক্ষার খাতায় ছাত্র লিখলো: ‘স্যার, উত্তর জানি না।’\nস্যার নিচে লিখলেন: ‘আমিও জানি না, তাই তো শিক্ষক!’ 😂",
+      "মা: এতক্ষণ ফোনে কী করিস?\nছেলে: পড়াশোনা করছি।\nমা: ফোনে?\nছেলে: হ্যাঁ, Google-এ বই খুঁজছি! 😂"
+    ]);
+  }
+
+  // Motivation
+  if (
+    /মোটিভেশন|motivation|হাল ছেড়ে|হাল ছেড়ে|পারবো না|পারব না|হতাশ/i.test(query)
+  ) {
+    return random([
+      "হাল ছেড়ো না। ধীরে ধীরে এগোলেও এগিয়ে যাচ্ছো। 💪",
+      "আজ কঠিন লাগছে মানেই তুমি পারবে না—এটা নয়। চেষ্টা চালিয়ে যাও। 🌿",
+      "নিজের ওপর বিশ্বাস রাখো। সময় লাগতে পারে, কিন্তু অসম্ভব নয়। 🤍",
+      "একবার ব্যর্থ হওয়া মানে শেষ নয়। আবার চেষ্টা করো। 💪"
+    ]);
+  }
+
+  // Sad
+  if (
+    /মন খারাপ|sad|কষ্ট|দুঃখ|depressed|খারাপ লাগছে/i.test(query)
+  ) {
+    return random([
+      "মন খারাপ হলে একা থেকো না। কারও সাথে কথা বলো। 🤍",
+      "সব খারাপ সময় স্থায়ী হয় না। একটু সময় দাও। 🌿",
+      "আজ মন খারাপ হতে পারে, কালটা আরও ভালো হতে পারে। ❤️",
+      "নিজেকে একটু সময় দাও। সবকিছু ধীরে ধীরে ঠিক হবে। 🤍"
+    ]);
+  }
+
+  // Sleep
+  if (
+    /ঘুম|ঘুমাবো|ঘুমাই|sleep|ঘুম পাচ্ছে/i.test(query)
+  ) {
+    return random([
+      "তাহলে এবার একটু ঘুমিয়ে নাও। 😴",
+      "ভালো ঘুম শরীর আর মন দুটোর জন্যই দরকার। 🌙",
+      "রাত জেগে থেকো না, ঘুমিয়ে নাও। 🤍"
+    ]);
+  }
+
+  // Food
+  if (
+    /খেয়েছ|খাইছ|খাবার|খাওয়া|খাওয়া|eat|খাইছো/i.test(query)
+  ) {
+    return random([
+      "হ্যাঁ, খাওয়া-দাওয়ার কথা মনে করিয়ে দিলে ভালোই করেছো। 😄",
+      "তুমিও সময়মতো খেয়ে নিও। 🌿",
+      "খালি পেটে থাকা যাবে না কিন্তু। 🤍"
+    ]);
+  }
+
+  // Bye
+  if (
+    /bye|বিদায়|বাই|যাই|যাচ্ছি|আল্লাহ হাফেজ/i.test(query)
+  ) {
+    return random([
+      "আচ্ছা, ভালো থেকো। আবার কথা হবে। 🤍",
+      "ঠিক আছে, পরে আবার এসো। 🌿",
+      "আল্লাহ হাফেজ। ভালো থেকো। ❤️",
+      "ঠিক আছে, দেখা হবে আবার। 😌"
+    ]);
+  }
+
+  return random(fallbackReplies);
+}
+
+
+// Command
+module.exports.run = async function ({
+  api,
+  event
+}) {
+  const body = event.body || "";
+
+  const query = getQuery(body);
+
+  return api.sendMessage(
+    getReply(query),
+    event.threadID,
+    event.messageID
+  );
 };
 
-module.exports.handleReply = async function ({ api, event, Users, handleReply }) {
- try {
- const senderName = await Users.getNameUser(event.senderID);
- const replyText = event.body ? event.body.toLowerCase() : "";
- if (!replyText) return;
- const simsim = await getMainAPI();
- const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(replyText)}&senderName=${encodeURIComponent(senderName)}`);
- const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
 
- for (const rep of replies) {
- await new Promise(resolve => {
- api.sendMessage(rep, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: event.senderID,
- type: "simsimi"
- });
- }
- resolve();
- }, event.messageID);
- });
- }
+// Auto conversation
+module.exports.handleEvent = async function ({
+  api,
+  event
+}) {
+  try {
+    const raw = event.body;
 
- } catch (err) {
- return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
- }
-};
+    if (!raw || typeof raw !== "string") {
+      return;
+    }
 
-module.exports.handleEvent = async function ({ api, event, Users }) {
- try {
- const raw = event.body ? event.body.toLowerCase().trim() : "";
- if (!raw) return;
+    const body = raw.trim();
 
- const senderName = await Users.getNameUser(event.senderID);
- const senderID = event.senderID;
+    const trigger =
+      /^(baby|bot|bby|jan|xan|জান|বট|বেবি)(\s+|$)/i;
 
- const simsim = await getMainAPI();
+    if (!trigger.test(body)) {
+      return;
+    }
 
-const greetings = [
-        "বেশি bot Bot করলে leave নিবো কিন্তু😒😒",
-        "শুনবো না😼 তুমি আমার বস সাহু কে প্রেম করাই দাও নাই🥺পচা তুমি🥺",
-        "আমি আবাল দের সাথে কথা বলি না,ok😒",
-        "এতো ডেকো না,প্রেম এ পরে যাবো তো🙈",
-        "Bolo Babu, তুমি কি আমার বস সাহু কে ভালোবাসো? 🙈💋",
-        "বার বার ডাকলে মাথা গরম হয়ে যায় কিন্তু😑",
-        "হ্যা বলো😒, তোমার জন্য কি করতে পারি😐😑?",
-        "এতো ডাকছিস কেন?গালি শুনবি নাকি? 🤬",
-        "I love you janu🥰",
-        "আরে Bolo আমার জান ,কেমন আছো?😚",
-        "আজ বট বলে অসম্মান করছি,😰😿",
-        "Hop beda😾,Boss বল boss😼",
-        "চুপ থাক ,নাই তো তোর দাত ভেগে দিবো কিন্তু",
-        "আমাকে না ডেকে মেয়ে হলে বস সাহুর ইনবক্সে চলে যা 🌚😂 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "আমাকে বট না বলে , বস সাহু কে জানু বল জানু 😘",
-        "বার বার Disturb করছিস কোনো😾,আমার জানুর সাথে ব্যাস্ত আছি😋",
-        "আরে বলদ এতো ডাকিস কেন🤬",
-        "আমাকে ডাকলে ,আমি কিন্তু কিস করে দিবো😘",
-        "আমারে এতো ডাকিস না আমি মজা করার mood এ নাই এখন😒",
-        "হ্যাঁ জানু , এইদিক এ আসো কিস দেই🤭 😘",
-        "দূরে যা, তোর কোনো কাজ নাই, শুধু bot bot করিস 😉😋🤣",
-        "তোর কথা তোর বাড়ি কেউ শুনে না ,তো আমি কোনো শুনবো ?🤔😂",
-        "আমাকে ডেকো না,আমি বস সাহুর সাথে ব্যাস্ত আছি",
-        "কি হলো , মিস্টেক করচ্ছিস নাকি🤣",
-        "বলো কি বলবা, সবার সামনে বলবা নাকি?🤭🤏",
-        "জান মেয়ে হলে বস সাহুর ইনবক্সে চলে যাও 😍🫣💕 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "কালকে দেখা করিস তো একটু 😈",
-        "হা বলো, শুনছি আমি 😏",
-        "আর কত বার ডাকবি ,শুনছি তো",
-        "হুম বলো কি বলবে😒",
-        "বলো কি করতে পারি তোমার জন্য",
-        "আমি তো অন্ধ কিছু দেখি না🐸 😎",
-        "আরে বোকা বট না জানু বল জানু😌",
-        "বলো জানু 🌚",
-        "তোর কি চোখে পড়ে না আমি ব্যাস্ত আছি😒",
-        "হুম জান তোমার ওই খানে উম্মহ😑😘",
-        "আহ শুনা আমার তোমার অলিতে গলিতে উম্মাহ😇😘",
-        "jang hanga korba😒😬",
-        "হুম জান তোমার অইখানে উম্মমাহ😷😘",
-        "আসসালামু আলাইকুম বলেন আপনার জন্য কি করতে পারি..!🥰",
-        "ভালোবাসার নামক আবলামি করতে চাইলে বস সাহুর ইনবক্সে গুতা দিন ~🙊😘🤣 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "আমাকে এতো না ডেকে বস সাহু এর কে একটা গফ দে 🙄",
-        "আমাকে এতো না ডেকছ কেন ভলো টালো বাসো নাকি🤭🙈",
-        "🌻🌺💚-আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ-💚🌺🌻",
-        "আমি এখন বস সাহু এর সাথে বিজি আছি আমাকে ডাকবেন না-😕😏 ধন্যবাদ-🤝🌻",
-        "আমাকে না ডেকে আমার বস সাহু কে একটা জি এফ দাও-😽🫶🌺",
-        "ঝাং থুমালে আইলাপিউ পেপি-💝😽",
-        "উফফ বুঝলাম না এতো ডাকছেন কেনো-😤😡😈",
-        "জান তোমার বান্ধবী রে আমার বস সাহুর হাতে তুলে দিবা-🙊🙆‍♂",
-        "আজকে আমার মন ভালো নেই তাই আমারে ডাকবেন না-😪🤧",
-        "ঝাং 🫵থুমালে য়ামি রাইতে পালুপাসি উম্মম্মাহ-🌺🤤💦",
-        "চুনা ও চুনা আমার বস সাহু এর হবু বউ রে কেও দেকছো খুজে পাচ্ছি না😪🤧😭",
-        "স্বপ্ন তোমারে নিয়ে দেখতে চাই তুমি যদি আমার হয়ে থেকে যাও-💝🌺🌻",
-        "জান হাঙ্গা করবা-🙊😝🌻",
-        "জান মেয়ে হলে চিপায় আসো বস সাহুর থেকে অনেক ভালোবাসা শিখছি তোমার জন্য-🙊🙈😽",
-        "ইসস এতো ডাকো কেনো লজ্জা লাগে তো-🙈🖤🌼",
-        "আমার বস সাহুর পক্ষ থেকে তোমারে এতো এতো ভালোবাসা-🥰😽🫶 আমার বস সাহু ইসলামে'র জন্য দোয়া করবেন-💝💚🌺🌻",
-        "- ভালোবাসা নামক আব্লামি করতে মন চাইলে আমার বস সাহু এর ইনবক্স চলে যাও-🙊🥱👅 🌻𝐅𝐀𝐂𝐄𝐁𝐎𝐎𝐊 𝐈𝐃 𝐋𝐈𝐍𝐊 🌻:- https://www.facebook.com/100044713412032",
-        "আমার জান তুমি শুধু আমার আমি তোমারে ৩৬৫ দিন ভালোবাসি-💝🌺😽",
-        "কিরে প্রেম করবি তাহলে বস সাহুর ইনবক্সে গুতা দে 😘🤌 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "জান আমার বস সাহু কে বিয়ে করবা-🙊😘🥳",
-        "-আন্টি-🙆-আপনার মেয়ে-👰‍♀️-রাতে আমারে ভিদু কল দিতে বলে🫣-🥵🤤💦",
-        "oii-🥺🥹-এক🥄 চামচ ভালোবাসা দিবা-🤏🏻🙂",
-        "-আপনার সুন্দরী বান্ধুবীকে ফিতরা হিসেবে আমার বস সাহু কে দান করেন-🥱🐰🍒",
-        "-ও মিম ও মিম-😇-তুমি কেন চুরি করলা সাদিয়ার ফর্সা হওয়ার ক্রীম-🌚🤧",
-        "-অনুমতি দিলাম-𝙋𝙧𝙤𝙥𝙤𝙨𝙚 কর বস সাহু কে-🐸😾🔪",
-        "-𝙂𝙖𝙮𝙚𝙨-🤗-যৌবনের কসম দিয়ে আমারে 𝐁𝐥𝐚𝐜𝐤𝐦𝐚𝐢𝐥 করা হচ্ছে-🥲🤦‍♂️🤧",
-        "-𝗢𝗶𝗶 আন্টি-🙆‍♂️-তোমার মেয়ে চোখ মারে-🥺🥴🐸",
-        "তাকাই আছো কেন চুমু দিবা-🙄🐸😘",
-        "আজকে প্রপোজ করে দেখো রাজি হইয়া যামু-😌🤗😇",
-        "-আমার গল্পে তোমার নানি সেরা-🙊🙆‍♂️🤗",
-        "কি বেপার আপনি শ্বশুর বাড়িতে যাচ্ছেন না কেন-🤔🥱🌻",
-        "দিনশেষে পরের 𝐁𝐎𝐖 সুন্দর-☹️🤧",
-        "-তাবিজ কইরা হইলেও ফ্রেম এক্কান করমুই তাতে যা হই হোক-🤧🥱🌻",
-        "-ছোটবেলা ভাবতাম বিয়ে করলে অটোমেটিক বাচ্চা হয়-🥱-ওমা এখন দেখি কাহিনী অন্যরকম-😦🙂🌻",
-        "প্রেম করতে চাইলে বস সাহুর ইনবক্সে চলে যা 😏🐸 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "-আজ একটা বিন নেই বলে ফেসবুকের নাগিন-🤧-গুলোরে আমার বস সাহু ধরতে পারছে না-🐸🥲",
-        "-চুমু থাকতে তোরা বিড়ি খাস কেন বুঝা আমারে-😑😒🐸⚒️",
-        "—যে ছেড়ে গেছে-😔-তাকে ভুলে যাও-🙂-আমার বস সাহু এর সাথে প্রেম করে তাকে দেখিয়ে দাও-🙈🐸🤗",
-        "—হাজারো লুচ্চা লুচ্চির ভিরে-🙊🥵আমার বস সাহু এক নিস্পাপ ভালো মানুষ-🥱🤗🙆‍♂️",
-        "-রূপের অহংকার করো না-🙂❤️চকচকে সূর্যটাও দিনশেষে অন্ধকারে পরিণত হয়-🤗💜",
-        "সুন্দর মাইয়া মানেই-🥱আমার বস সাহু'র বউ-😽🫶আর বাকি গুলো আমার বেয়াইন-🙈🐸🤗",
-        "এত অহংকার করে লাভ নেই-🌸মৃত্যুটা নিশ্চিত শুধু সময়টা অ'নিশ্চিত-🖤🙂",
-        "-দিন দিন কিছু মানুষের কাছে অপ্রিয় হয়ে যাইতেছি-🙂😿🌸",
-        "ভালোবাসার নামক আবলামি করতে চাইলে বস সাহুর ইনবক্সে গুতা দিন🤣😼",
-        "মেয়ে হলে বস সাহুর ইনবক্সে চলে যা 🤭🤣😼 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐋𝐢𝐧𝐤 : https://www.facebook.com/100044713412032",
-        "হুদাই আমারে শয়তানে লারে-😝😑☹️",
-        "-𝗜 𝗟𝗢𝗩𝗘 𝗬𝗢𝗨-😽-আহারে ভাবছো তোমারে প্রোপজ করছি-🥴-থাপ্পর দিয়া কিডনী লক করে দিব-😒-ভুল পড়া বের করে দিবো-🤭🐸",
-        "-আমি একটা দুধের শিশু-😇-🫵𝗬𝗢𝗨🐸💦",
-        "-কতদিন হয়ে গেলো বিছনায় মুতি না-😿-মিস ইউ নেংটা কাল-🥺🤧",
-        "-বালিকা━👸-𝐃𝐨 𝐲𝐨𝐮-🫵-বিয়া-𝐦𝐞-😽-আমি তোমাকে-😻-আম্মু হইতে সাহায্য করব-🙈🥱",
-        "-এই আন্টির মেয়ে-🫢🙈-𝐔𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐡-😽🫶-আসলেই তো স্বাদ-🥵💦-এতো স্বাদ কেন-🤔-সেই স্বাদ-😋",
-        "-ইস কেউ যদি বলতো-🙂-আমার শুধু তোমাকেই লাগবে-💜🌸",
-        "-ওই বেডি তোমার বাসায় না আমার বস সাহু মেয়ে দেখতে গেছিলো-🙃-নাস্তা আনারস আর দুধ দিছো-🙄🤦‍♂️-বইন কইলেই তো হয় বয়ফ্রেন্ড আছে-🥺🤦‍♂-আমার বস সাহু কে জানে মারার কি দরকার-🙄🤧",
-        "-একদিন সে ঠিকই ফিরে তাকাবে-😇-আর মুচকি হেসে বলবে ওর মতো আর কেউ ভালবাসেনি-🙂😅",
-        "-হুদাই গ্রুপে আছি-🥺🐸-কেও ইনবক্সে নক দিয়ে বলে না জান তোমারে আমি অনেক ভালোবাসি-🥺🤧",
-        "কি'রে গ্রুপে দেখি একটাও বেডি নাই-🤦‍🥱💦",
-        "-দেশের সব কিছুই চুরি হচ্ছে-🙄-শুধু আমার বস সাহু এর মনটা ছাড়া-🥴😑😏",
-        "-🫵তোমারে প্রচুর ভাল্লাগে-😽-সময় মতো প্রপোজ করমু বুঝছো-🔨😼-ছিট খালি রাইখো- 🥱🐸🥵",
-        "-আজ থেকে আর কাউকে পাত্তা দিমু না -!😏-কারণ আমি ফর্সা হওয়ার ক্রিম কিনছি -!🙂🐸"
-      ];
+    const query = getQuery(body);
 
+    return api.sendMessage(
+      getReply(query),
+      event.threadID,
+      event.messageID
+    );
 
- if (
- raw === "baby" || raw === "bot" || raw === "bby" ||
- raw === "jan" || raw === "xan" || raw === "জান" ||
- raw === "বট" || raw === "বেবি"
- ) {
- const randomReply = greetings[Math.floor(Math.random() * greetings.length)];
- return api.sendMessage(randomReply, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: senderID,
- type: "simsimi"
- });
- }
- }, event.messageID);
- }
-
- if (
- raw.startsWith("baby ") || raw.startsWith("bot ") || raw.startsWith("bby ") ||
- raw.startsWith("jan ") || raw.startsWith("xan ") ||
- raw.startsWith("জান ") || raw.startsWith("বট ") || raw.startsWith("বেবি ")
- ) {
- const query = raw.replace(/^baby\s+|^bot\s+|^bby\s+|^jan\s+|^xan\s+|^জান\s+|^বট\s+|^বেবি\s+/i, "").trim();
- if (!query) return;
-
- const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(query)}&senderName=${encodeURIComponent(senderName)}`);
- const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
-
- for (const rep of replies) {
- await new Promise(resolve => {
- api.sendMessage(rep, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: senderID,
- type: "simsimi"
- });
- }
- resolve();
- }, event.messageID);
- });
- }
- }
-
- } catch {}
+  } catch (error) {
+    console.error(
+      "[Tum Dum Baby] " + error.message
+    );
+  }
 };
