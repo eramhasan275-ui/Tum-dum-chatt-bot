@@ -93,13 +93,3 @@ module.exports.run = async ({ event, api }) => {
   );
 };
 
-যেগুলো সরানো হয়েছে:
-
-- ❌ SHAHADAT SAHU credit/name
-- ❌ Shahadat Chat Bot নাম
-- ❌ Facebook link
-- ❌ Messenger link
-- ❌ WhatsApp link
-- ❌ কোনো photo/attachment
-- ✅ Bot: Tum Dum
-- ✅ Owner: Eram
