@@ -3,8 +3,6 @@
  * Owner: Eram
  */
 
-const request = require("request");
-const fs = require("fs-extra");
 const moment = require("moment-timezone");
 
 module.exports.config = {
@@ -23,12 +21,6 @@ module.exports.run = async function ({ api, event }) {
     const time = moment()
         .tz("Asia/Dhaka")
         .format("DD/MM/YYYY hh:mm:ss A");
-
-    const cacheDir = __dirname + "/cache";
-    const imgPath = cacheDir + "/owner.jpg";
-
-    // Create cache folder if it doesn't exist
-    fs.ensureDirSync(cacheDir);
 
     const message = `
 ┌───────────────⭓
@@ -64,35 +56,9 @@ module.exports.run = async function ({ api, event }) {
 🤖 𝐓𝐮𝐦 𝐃𝐮𝐦 𝐁𝐨𝐭 🌺
 `;
 
-    // Image used by the command
-    const imageURL = "g";
-
-    const callback = () => {
-
-        if (!fs.existsSync(imgPath)) {
-            return api.sendMessage(
-                message.trim(),
-                event.threadID,
-                event.messageID
-            );
-        }
-
-        return api.sendMessage(
-            {
-                body: message.trim(),
-                attachment: fs.createReadStream(imgPath)
-            },
-            event.threadID,
-            () => {
-                if (fs.existsSync(imgPath)) {
-                    fs.unlinkSync(imgPath);
-                }
-            },
-            event.messageID
-        );
-    };
-
-    return request(encodeURI(imageURL))
-        .pipe(fs.createWriteStream(imgPath))
-        .on("close", callback);
+    return api.sendMessage(
+        message.trim(),
+        event.threadID,
+        event.messageID
+    );
 };
