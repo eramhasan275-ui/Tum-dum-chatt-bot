@@ -65,7 +65,7 @@ module.exports.run = async function ({ api, event }) {
 `;
 
     // Image used by the command
-    const imageURL = "https://i.imgur.com/g3hlQ0Z.jpeg";
+    const imageURL = "g";
 
     const callback = () => {
 
