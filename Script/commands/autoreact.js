@@ -1,4 +1,4 @@
-module.exports.config = {
+kimodule.exports.config = {
  name: "autoreact",
  version: "1.1.0",
  hasPermission: 0,
@@ -12,7 +12,7 @@ module.exports.handleEvent = async ({ api, event }) => {
  const threadData = global.data.threadData.get(event.threadID) || {};
  if (threadData["🥰"] === false) return; // Auto-react off
 
- const emojis = ["🥰", "😗", "🍂", "💜", "☺️", "🖤", "🤗", "😇", "🌺", "🥹", "😻", "😘", "🫣", "😽", "😺", "👀", "❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🤍", "💫", "💦", "🫶", "🫦", "👄", "🗣️", "💏", "👨‍👩‍👦‍👦", "👨‍👨‍👦", "😵", "🥵", "🥶", "🤨", "🤐", "🫡", "🤔"];
+ const em"];
  const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
  console.log(`Reacting with ${randomEmoji} to message ${event.messageID}`); // Debug log
