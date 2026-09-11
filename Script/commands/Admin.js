@@ -1,43 +1,57 @@
-const axios = require("axios");
+/**
+ * Tum Dum - Owner Information
+ * Owner: Eram
+ */
+
 const request = require("request");
 const fs = require("fs-extra");
 const moment = require("moment-timezone");
 
 module.exports.config = {
- name: "admin",
- version: "1.0.0",
- hasPermssion: 0,
- credits: "SHAHADAT SAHU",
- description: "Show Owner Info",
- commandCategory: "info",
- usages: "admin",
- cooldowns: 2
+    name: "admin",
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "Eram",
+    description: "Show Tum Dum Owner Info",
+    commandCategory: "info",
+    usages: "admin",
+    cooldowns: 2
 };
 
-module.exports.run = async function({ api, event }) {
- const time = moment().tz("Asia/Dhaka").format("DD/MM/YYYY hh:mm:ss A");
+module.exports.run = async function ({ api, event }) {
 
- const callback = () => api.sendMessage({
- body: `
+    const time = moment()
+        .tz("Asia/Dhaka")
+        .format("DD/MM/YYYY hh:mm:ss A");
+
+    const cacheDir = __dirname + "/cache";
+    const imgPath = cacheDir + "/owner.jpg";
+
+    // Create cache folder if it doesn't exist
+    fs.ensureDirSync(cacheDir);
+
+    const message = `
 ┌───────────────⭓
 │ 𝗢𝗪𝗡𝗘𝗥 𝗗𝗘𝗧𝗔𝗜𝗟𝗦
 ├───────────────
-│👤 𝐍𝐚𝐦𝐞 : SHAHADAT SAHU
-│🚹 𝐆𝐞𝐧𝐝𝐞𝐫 : Maile
-│❤️ 𝐑𝐞𝐥𝐚𝐭𝐢𝐨𝐧 : Single
-│🎂 𝐀𝐠𝐞 : 18+
-│🕌 𝐑𝐞𝐥𝐢𝐠𝐢𝐨𝐧 : Islam
-│🎓 𝐄𝐝𝐮𝐜𝐚𝐭𝐢𝐨𝐧 : HSC (2026)
-│🏡 𝐀𝐝𝐝𝐫𝐞𝐬𝐬 : Khagrachori 
+│ 👤 𝐍𝐚𝐦𝐞 : 𝐄𝐫𝐚𝐦
+│ 🎓 𝐄𝐝𝐮𝐜𝐚𝐭𝐢𝐨𝐧 : HSC (2026)
+│ 🏠 𝐋𝐨𝐜𝐚𝐭𝐢𝐨𝐧 : Dhaka, Bangladesh
 └───────────────⭓
 
 ┌───────────────⭓
-│ 𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗟𝗜𝗡𝗞𝗦
+│ 𝗖𝗢𝗡𝗧𝗔𝗖𝗧
 ├───────────────
-│📘 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸:
-│https://fb.com/Uhasbbz
-│💬 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽:
-│https://wa.me/01882333052
+│ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :
+│ wa.me/8801922361823
+└───────────────⭓
+
+┌───────────────⭓
+│ 🤖 𝗕𝗢𝗧 𝗜𝗡𝗙𝗢
+├───────────────
+│ 🤖 𝐁𝐨𝐭 : 𝐓𝐮𝐦 𝐃𝐮𝐦
+│ 👑 𝐎𝐰𝐧𝐞𝐫 : 𝐄𝐫𝐚𝐦
+│ 🟢 𝐒𝐭𝐚𝐭𝐮𝐬 : Online
 └───────────────⭓
 
 ┌───────────────⭓
@@ -45,11 +59,40 @@ module.exports.run = async function({ api, event }) {
 ├───────────────
 │ ${time}
 └───────────────⭓
- `,
- attachment: fs.createReadStream(__dirname + "/cache/owner.jpg")
- }, event.threadID, () => fs.unlinkSync(__dirname + "/cache/owner.jpg"));
 
- return request("https://i.imgur.com/g3hlQ0Z.jpeg") //এখানে আপনার ছবির Imgur link বসাবেন✅
- .pipe(fs.createWriteStream(__dirname + '/cache/owner.jpg'))
- .on('close', () => callback());
+❤️ 𝗧𝗵𝗮𝗻𝗸𝘀 𝗳𝗼𝗿 𝘂𝘀𝗶𝗻𝗴
+🤖 𝐓𝐮𝐦 𝐃𝐮𝐦 𝐁𝐨𝐭 🌺
+`;
+
+    // Image used by the command
+    const imageURL = "https://i.imgur.com/g3hlQ0Z.jpeg";
+
+    const callback = () => {
+
+        if (!fs.existsSync(imgPath)) {
+            return api.sendMessage(
+                message.trim(),
+                event.threadID,
+                event.messageID
+            );
+        }
+
+        return api.sendMessage(
+            {
+                body: message.trim(),
+                attachment: fs.createReadStream(imgPath)
+            },
+            event.threadID,
+            () => {
+                if (fs.existsSync(imgPath)) {
+                    fs.unlinkSync(imgPath);
+                }
+            },
+            event.messageID
+        );
+    };
+
+    return request(encodeURI(imageURL))
+        .pipe(fs.createWriteStream(imgPath))
+        .on("close", callback);
 };
