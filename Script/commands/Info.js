@@ -1,86 +1,188 @@
+/**
+ * Tum Dum - Bot Information
+ * Owner: Eram
+ */
+
 module.exports.config = {
- name: "info",
- version: "1.0.0",
- hasPermssion: 0,
- credits: "SHAHADAT SAHU",
- description: "Bot information command",
- commandCategory: "For users",
- hide: true,
- usages: "",
- cooldowns: 5,
+  name: "info",
+  version: "2.0.0",
+  hasPermssion: 0,
+  credits: "Eram",
+  description: "Tum Dum Bot information command",
+  commandCategory: "For users",
+  hide: true,
+  usages: "",
+  cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args, Users, Threads }) {
- const { threadID } = event;
- const request = global.nodemodule["request"];
- const fs = global.nodemodule["fs-extra"];
- const moment = require("moment-timezone");
+module.exports.run = async function ({
+  api,
+  event,
+  args,
+  Users,
+  Threads
+}) {
 
- const { configPath } = global.client;
- delete require.cache[require.resolve(configPath)];
- const config = require(configPath);
+  const { threadID } = event;
 
- const { commands } = global.client;
- const threadSetting = (await Threads.getData(String(threadID))).data || {};
- const prefix = threadSetting.hasOwnProperty("PREFIX") ? threadSetting.PREFIX : config.PREFIX;
+  const request = global.nodemodule["request"];
+  const fs = global.nodemodule["fs-extra"];
+  const moment = require("moment-timezone");
 
- const uptime = process.uptime();
- const hours = Math.floor(uptime / 3600);
- const minutes = Math.floor((uptime % 3600) / 60);
- const seconds = Math.floor(uptime % 60);
+  // ==============================
+  // CONFIG
+  // ==============================
 
- const totalUsers = global.data.allUserID.length;
- const totalThreads = global.data.allThreadID.length;
+  const { configPath } = global.client;
 
- const msg = `╭⭓ ⪩ 𝐁𝐎𝐓𝐓 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍 ⪨
+  delete require.cache[require.resolve(configPath)];
+
+  const config = require(configPath);
+
+  const { commands } = global.client;
+
+  // ==============================
+  // THREAD PREFIX
+  // ==============================
+
+  const threadData =
+    await Threads.getData(String(threadID));
+
+  const threadSetting =
+    threadData.data || {};
+
+  const prefix =
+    threadSetting.hasOwnProperty("PREFIX")
+      ? threadSetting.PREFIX
+      : config.PREFIX;
+
+  // ==============================
+  // BOT UPTIME
+  // ==============================
+
+  const uptime = process.uptime();
+
+  const hours =
+    Math.floor(uptime / 3600);
+
+  const minutes =
+    Math.floor((uptime % 3600) / 60);
+
+  const seconds =
+    Math.floor(uptime % 60);
+
+  // ==============================
+  // SYSTEM DATA
+  // ==============================
+
+  const totalUsers =
+    global.data.allUserID.length;
+
+  const totalThreads =
+    global.data.allThreadID.length;
+
+  const totalCommands =
+    commands.size;
+
+  const ping =
+    Date.now() - event.timestamp;
+
+  // ==============================
+  // BOT INFORMATION
+  // ==============================
+
+  const msg = `
+╭⭓ ⪩ 𝐓𝐔𝐌 𝐃𝐔𝐌 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎 ⪨
 │
-├─ 🤖 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲 : ─꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭
+├─ 🤖 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲 : 𝐓𝐮𝐦 𝐃𝐮𝐦
+├─ 👑 𝗢𝘄𝗻𝗲𝗿 : 𝐄𝐫𝐚𝐦
 ├─ ☢️ 𝗣𝗿𝗲𝗳𝗶𝘅 : ${config.PREFIX}
 ├─ ♻️ 𝗣𝗿𝗲𝗳𝗶𝘅 𝗕𝗼𝘅 : ${prefix}
-├─ 🔶 𝗠𝗼𝗱𝘂𝗹𝗲𝘀 : ${commands.size}
-├─ 🔰 𝗣𝗶𝗻𝗴 : ${Date.now() - event.timestamp}ms
+├─ 🔶 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀 : ${totalCommands}
+├─ 🔰 𝗣𝗶𝗻𝗴 : ${ping}ms
 │
 ╰───────⭓
 
 ╭⭓ ⪩ 𝗢𝗪𝗡𝗘𝗥 𝗜𝗡𝗙𝗢 ⪨
 │
-├─ 👑 𝗡𝗮𝗺𝗲 : 𝐒𝐇𝐀𝐇𝐀𝐃𝐀𝐓 𝐒𝐀𝐇𝐔
-├─ 📲 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :
-│ facebook.com/100044713412032
-├─ 💌 𝗠𝗲𝘀𝘀𝗲𝗻𝗴𝗲𝗿 :
-│ m.me/100044713412032
-├─ 📞 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :
-│ wa.me/+8801882333052
+├─ 👑 𝗡𝗮𝗺𝗲 : 𝐄𝐫𝐚𝐦
+├─ 📞 𝗪𝗵𝗮𝘁𝘀𝐀𝐩𝐩 :
+│ wa.me/8801922361823
 │
 ╰───────⭓
 
-╭⭓ ⪩ 𝗔𝗖𝗧𝗜𝗩𝗜𝗧𝗜𝗘𝗦 ⪨
+╭⭓ ⪩ 𝗔𝗖𝗧𝗜𝗩𝗜𝗧𝗜𝗄𝗄𝗦 ⪨
 │
 ├─ ⏳ 𝗔𝗰𝘁𝗶𝘃𝗲 𝗧𝗶𝗺𝗲 : ${hours}h ${minutes}m ${seconds}s
 ├─ 📣 𝗚𝗿𝗼𝘂𝗽𝘀 : ${totalThreads}
 ├─ 🧿 𝗧𝗼𝘁𝗮𝗹 𝗨𝘀𝗲𝗿𝘀 : ${totalUsers}
 ╰───────⭓
 
-❤️ 𝗧𝗵𝗮𝗻𝗸𝘀 𝗳𝗼𝗿 𝘂𝘀𝗶𝗻𝗴 🌺
- 😍─꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭😘`;
- 
-// 🔹 এখানে আপনার ফটো Imgur লিংক করে বসাবেন ✅
+❤️ 𝗧𝗵𝗮𝗻𝗸𝘀 𝗳𝗼𝗿 𝘂𝘀𝗶𝗻𝗴
+🤖 𝐓𝐮𝐦 𝐃𝐮𝐦 𝐁𝐨𝐭 🌺
+`;
 
- const imgLinks = [
+  // ==============================
+  // RANDOM BACKGROUND
+  // ==============================
+
+  const imgLinks = [
     "https://i.imgur.com/gokzyKd.jpeg",
     "https://i.imgur.com/g3hlQ0Z.jpeg",
     "https://i.imgur.com/L7txp4M.jpeg",
     "https://i.imgur.com/5dG8PS5.jpeg"
- ];
+  ];
 
- const imgLink = imgLinks[Math.floor(Math.random() * imgLinks.length)];
+  const imgLink =
+    imgLinks[
+      Math.floor(Math.random() * imgLinks.length)
+    ];
 
- const callback = () => {
- api.sendMessage({
- body: msg,
- attachment: fs.createReadStream(__dirname + "/cache/info.jpg")
- }, threadID, () => fs.unlinkSync(__dirname + "/cache/info.jpg"));
- };
+  // ==============================
+  // CACHE
+  // ==============================
 
- return request(encodeURI(imgLink)).pipe(fs.createWriteStream(__dirname + "/cache/info.jpg")).on("close", callback);
+  const cacheDir =
+    __dirname + "/cache";
+
+  const imgPath =
+    cacheDir + "/info.jpg";
+
+  fs.ensureDirSync(cacheDir);
+
+  // ==============================
+  // SEND MESSAGE
+  // ==============================
+
+  const callback = () => {
+
+    if (!fs.existsSync(imgPath)) {
+      return api.sendMessage(
+        msg.trim(),
+        threadID,
+        event.messageID
+      );
+    }
+
+    return api.sendMessage(
+      {
+        body: msg.trim(),
+        attachment:
+          fs.createReadStream(imgPath)
+      },
+      threadID,
+      () => {
+        if (fs.existsSync(imgPath)) {
+          fs.unlinkSync(imgPath);
+        }
+      },
+      event.messageID
+    );
+  };
+
+  return request(encodeURI(imgLink))
+    .pipe(
+      fs.createWriteStream(imgPath)
+    )
+    .on("close", callback);
 };
