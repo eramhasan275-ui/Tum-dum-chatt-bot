@@ -1,15 +1,16 @@
-const axios = require("axios");
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-const CONFIG_URL = "https://gitlab.com/shahadat-sahu/sahu-api/-/raw/main/API.json";
+/**
+ * Tum Dum - General Knowledge Quiz
+ * Owner: Eram
+ * BCS + Admission Exam Focused
+ * No External API Required
+ */
 
 module.exports.config = {
   name: "quiz",
-  version: "1.0.0",
+  version: "2.0.0",
   hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
-  description: "Quiz with 30s timer",
+  credits: "Eram",
+  description: "Bangladesh & International General Knowledge Quiz",
   commandCategory: "Game",
   usages: "quiz",
   cooldowns: 0,
@@ -17,109 +18,666 @@ module.exports.config = {
 };
 
 const TIME_LIMIT = 30000;
-let QUIZ_API = null;
 
-async function loadQuizAPI() {
-  try {
-    if (QUIZ_API) return QUIZ_API;
-    const res = await axios.get(CONFIG_URL);
-    QUIZ_API = res.data.quize.replace(/\/$/, "");
-    return QUIZ_API;
-  } catch {
-    return null;
+/*
+  ৫০টি প্রশ্ন:
+  বাংলাদেশ + আন্তর্জাতিক + ইতিহাস + ভূগোল +
+  বিজ্ঞান + সংবিধান + BCS/Admission গুরুত্বপূর্ণ বিষয়
+*/
+
+const quizzes = [
+
+  {
+    q: "বাংলাদেশের সংবিধান কবে কার্যকর হয়?",
+    A: "১৬ ডিসেম্বর ১৯৭১",
+    B: "১৬ ডিসেম্বর ১৯৭২",
+    C: "২৬ মার্চ ১৯৭২",
+    D: "৪ নভেম্বর ১৯৭২",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় সংসদ ভবনের স্থপতি কে?",
+    A: "মুজহারুল ইসলাম",
+    B: "লুই আই কান",
+    C: "ফজলুর রহমান খান",
+    D: "বশীরুল হক",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের মুক্তিযুদ্ধের সর্বাধিনায়ক কে ছিলেন?",
+    A: "তাজউদ্দীন আহমদ",
+    B: "জিয়াউর রহমান",
+    C: "এম. এ. জি. ওসমানী",
+    D: "সৈয়দ নজরুল ইসলাম",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের স্বাধীনতার ঘোষণাপত্র কবে জারি করা হয়?",
+    A: "১০ এপ্রিল ১৯৭১",
+    B: "২৬ মার্চ ১৯৭১",
+    C: "১৭ এপ্রিল ১৯৭১",
+    D: "১৬ ডিসেম্বর ১৯৭১",
+    answer: "A"
+  },
+
+  {
+    q: "মুজিবনগর সরকার কবে শপথ গ্রহণ করে?",
+    A: "১০ এপ্রিল ১৯৭১",
+    B: "১৭ এপ্রিল ১৯৭১",
+    C: "২৬ মার্চ ১৯৭১",
+    D: "১৬ ডিসেম্বর ১৯৭১",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় ফুল কোনটি?",
+    A: "গোলাপ",
+    B: "শাপলা",
+    C: "বেলি",
+    D: "জুঁই",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় ফল কোনটি?",
+    A: "আম",
+    B: "কাঁঠাল",
+    C: "লিচু",
+    D: "কলা",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় কবি কে?",
+    A: "রবীন্দ্রনাথ ঠাকুর",
+    B: "জসীমউদ্দীন",
+    C: "কাজী নজরুল ইসলাম",
+    D: "সুকান্ত ভট্টাচার্য",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের প্রথম রাষ্ট্রপতি কে ছিলেন?",
+    A: "শেখ মুজিবুর রহমান",
+    B: "সৈয়দ নজরুল ইসলাম",
+    C: "আবু সাঈদ চৌধুরী",
+    D: "জিয়াউর রহমান",
+    answer: "A"
+  },
+
+  {
+    q: "বাংলাদেশের প্রথম প্রধানমন্ত্রী কে ছিলেন?",
+    A: "শেখ মুজিবুর রহমান",
+    B: "তাজউদ্দীন আহমদ",
+    C: "সৈয়দ নজরুল ইসলাম",
+    D: "এ. এইচ. এম. কামারুজ্জামান",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের বৃহত্তম ম্যানগ্রোভ বন কোনটি?",
+    A: "ভাওয়াল বন",
+    B: "মধুপুর গড়",
+    C: "সুন্দরবন",
+    D: "লাউয়াছড়া",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের দীর্ঘতম সমুদ্র সৈকত কোনটি?",
+    A: "কুয়াকাটা",
+    B: "কক্সবাজার",
+    C: "পতেঙ্গা",
+    D: "সেন্ট মার্টিন",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের মুক্তিযুদ্ধের সেক্টর সংখ্যা কত?",
+    A: "৯",
+    B: "১০",
+    C: "১১",
+    D: "১২",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের সংবিধানে মৌলিক অধিকার কোন ভাগে রয়েছে?",
+    A: "প্রথম ভাগ",
+    B: "দ্বিতীয় ভাগ",
+    C: "তৃতীয় ভাগ",
+    D: "চতুর্থ ভাগ",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় মসজিদ কোনটি?",
+    A: "বায়তুল মোকাররম",
+    B: "ষাট গম্বুজ মসজিদ",
+    C: "তারা মসজিদ",
+    D: "চকবাজার মসজিদ",
+    answer: "A"
+  },
+
+  {
+    q: "বাংলাদেশের প্রথম কৃত্রিম উপগ্রহের নাম কী?",
+    A: "বঙ্গবন্ধু-১",
+    B: "বাংলাদেশ-১",
+    C: "বিজয়-১",
+    D: "সোনার বাংলা-১",
+    answer: "A"
+  },
+
+  {
+    q: "জাতিসংঘ প্রতিষ্ঠিত হয় কত সালে?",
+    A: "১৯৪৩",
+    B: "১৯৪৫",
+    C: "১৯৪৭",
+    D: "১৯৫০",
+    answer: "B"
+  },
+
+  {
+    q: "জাতিসংঘের সদর দপ্তর কোথায়?",
+    A: "জেনেভা",
+    B: "প্যারিস",
+    C: "নিউইয়র্ক",
+    D: "লন্ডন",
+    answer: "C"
+  },
+
+  {
+    q: "জাতিসংঘের বর্তমান সদস্য রাষ্ট্রের সংখ্যা কত?",
+    A: "১৯১",
+    B: "১৯৩",
+    C: "১৯৫",
+    D: "১৯৭",
+    answer: "B"
+  },
+
+  {
+    q: "আন্তর্জাতিক বিচার আদালত কোথায় অবস্থিত?",
+    A: "জেনেভা",
+    B: "দ্য হেগ",
+    C: "ভিয়েনা",
+    D: "প্যারিস",
+    answer: "B"
+  },
+
+  {
+    q: "বিশ্বের বৃহত্তম মহাসাগর কোনটি?",
+    A: "আটলান্টিক",
+    B: "ভারত মহাসাগর",
+    C: "প্রশান্ত মহাসাগর",
+    D: "আর্কটিক",
+    answer: "C"
+  },
+
+  {
+    q: "বিশ্বের বৃহত্তম মহাদেশ কোনটি?",
+    A: "আফ্রিকা",
+    B: "এশিয়া",
+    C: "ইউরোপ",
+    D: "উত্তর আমেরিকা",
+    answer: "B"
+  },
+
+  {
+    q: "বিশ্বের ক্ষুদ্রতম মহাদেশ কোনটি?",
+    A: "ইউরোপ",
+    B: "অ্যান্টার্কটিকা",
+    C: "অস্ট্রেলিয়া",
+    D: "দক্ষিণ আমেরিকা",
+    answer: "C"
+  },
+
+  {
+    q: "বিশ্বের সর্বোচ্চ পর্বতশৃঙ্গ কোনটি?",
+    A: "K2",
+    B: "মাকালু",
+    C: "এভারেস্ট",
+    D: "কাঞ্চনজঙ্ঘা",
+    answer: "C"
+  },
+
+  {
+    q: "পৃথিবীর বৃহত্তম মরুভূমি কোনটি?",
+    A: "সাহারা",
+    B: "গোবি",
+    C: "আরব মরুভূমি",
+    D: "অ্যান্টার্কটিক মরুভূমি",
+    answer: "D"
+  },
+
+  {
+    q: "সাহারা মরুভূমি কোন মহাদেশে?",
+    A: "এশিয়া",
+    B: "আফ্রিকা",
+    C: "অস্ট্রেলিয়া",
+    D: "দক্ষিণ আমেরিকা",
+    answer: "B"
+  },
+
+  {
+    q: "আয়তনে বিশ্বের বৃহত্তম দেশ কোনটি?",
+    A: "চীন",
+    B: "কানাডা",
+    C: "রাশিয়া",
+    D: "যুক্তরাষ্ট্র",
+    answer: "C"
+  },
+
+  {
+    q: "বিশ্বের ক্ষুদ্রতম দেশ কোনটি?",
+    A: "মোনাকো",
+    B: "ভ্যাটিকান সিটি",
+    C: "সান মারিনো",
+    D: "মালদ্বীপ",
+    answer: "B"
+  },
+
+  {
+    q: "জাপানের মুদ্রার নাম কী?",
+    A: "ইউয়ান",
+    B: "ইয়েন",
+    C: "ওয়ন",
+    D: "রিঙ্গিত",
+    answer: "B"
+  },
+
+  {
+    q: "যুক্তরাজ্যের মুদ্রার নাম কী?",
+    A: "ইউরো",
+    B: "ডলার",
+    C: "পাউন্ড স্টার্লিং",
+    D: "ফ্রাঙ্ক",
+    answer: "C"
+  },
+
+  {
+    q: "ইউরোপীয় ইউনিয়নের সদর দপ্তর কোথায়?",
+    A: "বার্লিন",
+    B: "ব্রাসেলস",
+    C: "রোম",
+    D: "মাদ্রিদ",
+    answer: "B"
+  },
+
+  {
+    q: "OIC-এর সদর দপ্তর কোথায়?",
+    A: "রিয়াদ",
+    B: "জেদ্দা",
+    C: "দোহা",
+    D: "আবুধাবি",
+    answer: "B"
+  },
+
+  {
+    q: "SAARC-এর সদর দপ্তর কোথায়?",
+    A: "ঢাকা",
+    B: "নয়াদিল্লি",
+    C: "কাঠমান্ডু",
+    D: "কলম্বো",
+    answer: "C"
+  },
+
+  {
+    q: "NATO প্রতিষ্ঠিত হয় কত সালে?",
+    A: "১৯৪৫",
+    B: "১৯৪৭",
+    C: "১৯৪৯",
+    D: "১৯৫১",
+    answer: "C"
+  },
+
+  {
+    q: "WHO-এর সদর দপ্তর কোথায়?",
+    A: "জেনেভা",
+    B: "নিউইয়র্ক",
+    C: "প্যারিস",
+    D: "রোম",
+    answer: "A"
+  },
+
+  {
+    q: "বিশ্বের প্রথম কৃত্রিম উপগ্রহের নাম কী?",
+    A: "Apollo-1",
+    B: "Sputnik-1",
+    C: "Explorer-1",
+    D: "Vostok-1",
+    answer: "B"
+  },
+
+  {
+    q: "মানবদেহের সবচেয়ে বড় অঙ্গ কোনটি?",
+    A: "হৃদপিণ্ড",
+    B: "যকৃত",
+    C: "ত্বক",
+    D: "ফুসফুস",
+    answer: "C"
+  },
+
+  {
+    q: "মানবদেহে রক্ত পরিশোধন করে কোন অঙ্গ?",
+    A: "হৃদপিণ্ড",
+    B: "কিডনি",
+    C: "ফুসফুস",
+    D: "পাকস্থলী",
+    answer: "B"
+  },
+
+  {
+    q: "ভিটামিন C-এর অভাবে কোন রোগ হয়?",
+    A: "রিকেটস",
+    B: "স্কার্ভি",
+    C: "রাতকানা",
+    D: "বেরিবেরি",
+    answer: "B"
+  },
+
+  {
+    q: "ভিটামিন D-এর অভাবে কোন রোগ হয়?",
+    A: "স্কার্ভি",
+    B: "রিকেটস",
+    C: "বেরিবেরি",
+    D: "অ্যানিমিয়া",
+    answer: "B"
+  },
+
+  {
+    q: "পানির রাসায়নিক সংকেত কী?",
+    A: "CO₂",
+    B: "H₂O",
+    C: "O₂",
+    D: "H₂SO₄",
+    answer: "B"
+  },
+
+  {
+    q: "বায়ুমণ্ডলে সবচেয়ে বেশি কোন গ্যাস রয়েছে?",
+    A: "অক্সিজেন",
+    B: "কার্বন ডাই-অক্সাইড",
+    C: "নাইট্রোজেন",
+    D: "হাইড্রোজেন",
+    answer: "C"
+  },
+
+  {
+    q: "সূর্যের সবচেয়ে কাছের গ্রহ কোনটি?",
+    A: "শুক্র",
+    B: "বুধ",
+    C: "পৃথিবী",
+    D: "মঙ্গল",
+    answer: "B"
+  },
+
+  {
+    q: "সৌরজগতের বৃহত্তম গ্রহ কোনটি?",
+    A: "শনি",
+    B: "পৃথিবী",
+    C: "বৃহস্পতি",
+    D: "নেপচুন",
+    answer: "C"
+  },
+
+  {
+    q: "লাল গ্রহ নামে পরিচিত কোনটি?",
+    A: "শুক্র",
+    B: "মঙ্গল",
+    C: "বুধ",
+    D: "শনি",
+    answer: "B"
+  },
+
+  {
+    q: "চাঁদে প্রথম পা রাখেন কে?",
+    A: "ইউরি গ্যাগারিন",
+    B: "নীল আর্মস্ট্রং",
+    C: "বাজ অলড্রিন",
+    D: "মাইকেল কলিন্স",
+    answer: "B"
+  },
+
+  {
+    q: "ফরাসি বিপ্লব সংঘটিত হয় কত সালে?",
+    A: "১৭৭৬",
+    B: "১৭৮৯",
+    C: "১৮০৪",
+    D: "১৮১৫",
+    answer: "B"
+  },
+
+  {
+    q: "ভারত স্বাধীনতা লাভ করে কত সালে?",
+    A: "১৯৪৫",
+    B: "১৯৪৬",
+    C: "১৯৪৭",
+    D: "১৯৪৮",
+    answer: "C"
+  },
+
+  {
+    q: "পলাশীর যুদ্ধ সংঘটিত হয় কত সালে?",
+    A: "১৭৫৬",
+    B: "১৭৫৭",
+    C: "১৭৬৪",
+    D: "১৭৭২",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের মুক্তিযুদ্ধের সময়কাল কত মাস?",
+    A: "৬ মাস",
+    B: "৭ মাস",
+    C: "৮ মাস",
+    D: "৯ মাস",
+    answer: "D"
+  },
+
+  {
+    q: "‘আমার সোনার বাংলা’ গানটির রচয়িতা কে?",
+    A: "কাজী নজরুল ইসলাম",
+    B: "রবীন্দ্রনাথ ঠাকুর",
+    C: "দ্বিজেন্দ্রলাল রায়",
+    D: "জসীমউদ্দীন",
+    answer: "B"
+  },
+
+  {
+    q: "বাংলাদেশের জাতীয় পতাকার নকশাকার কে?",
+    A: "কামরুল হাসান",
+    B: "জয়নুল আবেদিন",
+    C: "শিব নারায়ণ দাস",
+    D: "কাইয়ুম চৌধুরী",
+    answer: "C"
+  },
+
+  {
+    q: "বাংলাদেশের সর্বোচ্চ বেসামরিক পুরস্কার কোনটি?",
+    A: "একুশে পদক",
+    B: "স্বাধীনতা পুরস্কার",
+    C: "বাংলা একাডেমি পুরস্কার",
+    D: "একুশে সম্মাননা",
+    answer: "B"
+  },
+
+  {
+    q: "আন্তর্জাতিক মাতৃভাষা দিবস কবে?",
+    A: "২৬ মার্চ",
+    B: "১৬ ডিসেম্বর",
+    C: "২১ ফেব্রুয়ারি",
+    D: "১৪ ডিসেম্বর",
+    answer: "C"
   }
+
+];
+
+function getRandomQuiz() {
+  return quizzes[
+    Math.floor(Math.random() * quizzes.length)
+  ];
 }
 
 module.exports.run = async function ({ api, event }) {
   const { threadID, messageID } = event;
-  if (!global.client.handleReply) global.client.handleReply = [];
 
-  try {
-    const quizAPI = await loadQuizAPI();
-    if (!quizAPI) return api.sendMessage("Quiz API error call boss SAHU✔️", threadID, messageID);
+  if (!global.client.handleReply) {
+    global.client.handleReply = [];
+  }
 
-    const res = await axios.get(quizAPI + "/quiz");
-    const data = res.data;
+  const data = getRandomQuiz();
 
-    if (!data || !data.question) {
-      return api.sendMessage("❌ No quiz available", threadID, messageID);
-    }
+  const msg =
+`╭──────────────────╮
+      🎯 𝐆𝐊 𝐐𝐔𝐈𝐙
+╰──────────────────╯
 
-    const msg =
-      `🎮 𝗚𝗮𝗺𝗲 𝗤𝘂𝗶𝘇 𝗦𝘁𝗮𝗿𝘁𝗲𝗱\n` +
-      `━━━━━━━━━━━━━━━━━━\n` +
-      `🔻 ${data.question}\n\n` +
-      `A › ${data.A}\n` +
-      `B › ${data.B}\n` +
-      `C › ${data.C}\n` +
-      `D › ${data.D}\n\n` +
-      `⏰ 30s • Reply: A/B/C/D`;
+📚 BCS & Admission Preparation
 
-    api.sendMessage(msg, threadID, (err, info) => {
+❓ ${data.q}
+
+🅰️ A › ${data.A}
+🅱️ B › ${data.B}
+©️ C › ${data.C}
+🅳 D › ${data.D}
+
+⏰ সময়: ৩০ সেকেন্ড
+✍️ উত্তর দিতে শুধু A / B / C / D লিখুন।
+
+🤖 Tum Dum
+👑 Owner: Eram`;
+
+  return api.sendMessage(
+    msg,
+    threadID,
+    (err, info) => {
+
       if (err) return;
 
-      const timeout = setTimeout(async () => {
-        const i = global.client.handleReply.findIndex(e => e.messageID === info.messageID);
-        if (i === -1) return;
+      const timeout = setTimeout(() => {
 
-        const hr = global.client.handleReply[i];
+        const index =
+          global.client.handleReply.findIndex(
+            item =>
+              item.messageID === info.messageID
+          );
 
-        if (!hr.answered) {
-          const result = await axios.post(quizAPI + "/quiz/answer", {
-            sessionID: hr.sessionID,
-            answer: ""
-          });
+        if (index === -1) return;
 
-          api.sendMessage(`⏰ Time Up!\nCorrect Answer: ${result.data.answer}`, threadID);
+        const quiz =
+          global.client.handleReply[index];
+
+        if (!quiz.answered) {
+
+          api.sendMessage(
+`⏰ 𝐓𝐈𝐌𝐄 𝐔𝐏!
+
+❌ সময় শেষ হয়ে গেছে।
+
+✅ সঠিক উত্তর: ${quiz.answer}
+
+📖 প্রশ্ন:
+${quiz.question}`,
+            threadID
+          );
         }
 
-        await api.unsendMessage(info.messageID);
-        global.client.handleReply.splice(i, 1);
+        global.client.handleReply.splice(
+          index,
+          1
+        );
+
       }, TIME_LIMIT);
 
       global.client.handleReply.push({
         name: module.exports.config.name,
         messageID: info.messageID,
-        sessionID: data.sessionID,
-        timeout,
+        answer: data.answer,
+        question: data.q,
+        timeout: timeout,
         answered: false
       });
-    }, messageID);
 
-  } catch {
-    api.sendMessage("Quiz API error call boss SAHU✔", threadID, messageID);
-  }
+    },
+    messageID
+  );
 };
 
-module.exports.handleReply = async function ({ api, event, handleReply }) {
+module.exports.handleReply = async function ({
+  api,
+  event,
+  handleReply
+}) {
+
   const { threadID, body, messageID } = event;
 
-  const ans = body.trim().toUpperCase();
-  if (!["A", "B", "C", "D"].includes(ans)) return;
+  if (!body) return;
 
-  handleReply.answered = true;
-  clearTimeout(handleReply.timeout);
+  const answer =
+    body.trim().toUpperCase();
 
-  try {
-    const quizAPI = await loadQuizAPI();
-
-    const res = await axios.post(quizAPI + "/quiz/answer", {
-      sessionID: handleReply.sessionID,
-      answer: ans
-    });
-
-    if (res.data.correct === true) {
-      api.sendMessage(`✅ Correct! (${res.data.answer})`, threadID, messageID);
-    } else {
-      api.sendMessage(`❌ Wrong!\nCorrect: ${res.data.answer}`, threadID, messageID);
-    }
-
-    await api.unsendMessage(handleReply.messageID);
-
-  } catch {
-    api.sendMessage("❌ Failed to check answer", threadID, messageID);
+  if (
+    !["A", "B", "C", "D"].includes(answer)
+  ) {
+    return;
   }
 
-  const i = global.client.handleReply.findIndex(e => e.messageID === handleReply.messageID);
-  if (i !== -1) global.client.handleReply.splice(i, 1);
+  if (handleReply.answered) return;
+
+  handleReply.answered = true;
+
+  clearTimeout(
+    handleReply.timeout
+  );
+
+  const correct =
+    answer === handleReply.answer;
+
+  if (correct) {
+
+    await api.sendMessage(
+`╭──────────────────╮
+       ✅ 𝐂𝐎𝐑𝐑𝐄𝐂𝐓
+╰──────────────────╯
+
+🎉 সঠিক উত্তর দিয়েছো!
+
+🏆 Answer: ${handleReply.answer}
+📚 ভালো করেছো!`,
+      threadID,
+      messageID
+    );
+
+  } else {
+
+    await api.sendMessage(
+`╭──────────────────╮
+        ❌ 𝐖𝐑𝐎𝐍𝐆
+╰──────────────────╯
+
+তোমার উত্তর: ${answer}
+সঠিক উত্তর: ${handleReply.answer}
+
+📚 আবার চেষ্টা করো।`,
+      threadID,
+      messageID
+    );
+  }
+
+  const index =
+    global.client.handleReply.findIndex(
+      item =>
+        item.messageID ===
+        handleReply.messageID
+    );
+
+  if (index !== -1) {
+    global.client.handleReply.splice(
+      index,
+      1
+    );
+  }
 };
