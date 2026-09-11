@@ -1,53 +1,98 @@
+/**
+ * Tum Dum - Admin Mention
+ * Owner: Eram
+ */
+
 module.exports.config = {
   name: "adminmention",
-  version: "1.0.0",
+  version: "2.0.0",
   hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
-  description: "Bot will reply only when someone directly mentions an admin",
+  credits: "Eram",
+  description: "Replies when someone directly mentions a bot admin",
   commandCategory: "Other",
   usages: "@",
   cooldowns: 1
 };
 
-module.exports.handleEvent = function({ api, event }) {
+module.exports.handleEvent = function ({ api, event }) {
+
+  // Bot Admin IDs
   const adminIDs = [
     "100089047474463",
     "100001039692046",
     "100044713412032"
   ].map(String);
 
-  if (adminIDs.includes(String(event.senderID))) return;
+  // Admin নিজে mention করলে reply করবে না
+  if (adminIDs.includes(String(event.senderID))) {
+    return;
+  }
 
-  if (event.type === "message_reply" || event.messageReply) return;
+  // কোনো message reply হলে কাজ করবে না
+  if (event.type === "message_reply" || event.messageReply) {
+    return;
+  }
 
-  if (!event.mentions || Object.keys(event.mentions).length === 0) return;
+  // Mention না থাকলে কিছু করবে না
+  if (
+    !event.mentions ||
+    Object.keys(event.mentions).length === 0
+  ) {
+    return;
+  }
 
-  const mentionedIDs = Object.keys(event.mentions).map(String);
+  const mentionedIDs =
+    Object.keys(event.mentions).map(String);
 
-  if (!adminIDs.some(id => mentionedIDs.includes(id))) return;
+  // Admin-কে mention করা হয়েছে কিনা
+  if (
+    !adminIDs.some(id =>
+      mentionedIDs.includes(id)
+    )
+  ) {
+    return;
+  }
 
   const replies = [
-    "ডাকাডাকি করিস না বস ব্যস্ত আছে 😒😌",
-    "বস এক আবালে আপনাকে মেনশন দিছে 😑😃",
-    "যেভাবে মেনশন দিতাচত মনে হয় তোর গার্লফ্রেন্ডটারে, আমার বসকে দিয়া দিবি 🫥😒",
-    "বস এক পাগল ছাগল, আপনাকে ডাকতেছে 🐸🫵",
-    "বস এক হালায় আপনার নাম ধরছে, আপনি শুধু একবার আদেশ করুন, আজকে হালার নানিরে চমলক্ক করে দিমু 😑🥴",
-    "মেনশন না দিয়া একটা girlfriend খুজে দে 🙃😮💨",
-    "মাইয়া হলে বসের ইনবক্স এ যাও 😗😁",
-    "বস এখন ব্যস্ত আছে, কিছু বলতে হলে ইনবক্স এ গিয়া বল",
-    "বস এখন আমার সাথে মিটিং এ আছে, মেনশন দিস না 🙂",
-    "বস এখন ব্যস্ত আছে, কি বলবি আমাকে বল",
-    "মেনশন না দিয়া বস বল বস 🥵💋",
-    "কিরে তোর এতো সাহস আমার বসের নাম ধরিস 😾🫵",
-    "এতো মেনশন না দিয়া তোর গার্লফ্রেন্ডটারে দিয়া দে 😹🐸",
-    "এইভাবে মেনশন করতাস, না জানি তুই প্রেমে পড়ছোস কিনা 😼❤️"
+
+    "জি, বসকে মেনশন করেছেন। একটু অপেক্ষা করুন। 🙂",
+
+    "বসের নজরে মেনশন পৌঁছে গেছে। 😌",
+
+    "বস বর্তমানে ব্যস্ত আছেন। প্রয়োজনীয় কথা হলে একটু পরে বলুন।",
+
+    "বসকে সরাসরি মেনশন করেছেন দেখছি। 👀",
+
+    "বস এখন ব্যস্ত আছেন। আপনার কথাটা আমাকে বলতে পারেন। 🙂",
+
+    "মেনশনটি নোট করা হয়েছে। বস সময় পেলে উত্তর দেবেন।",
+
+    "একটু ধৈর্য ধরুন, বসকে জানিয়ে দিচ্ছি। 🤍",
+
+    "বস এখন কাজে আছেন। পরে মেনশন করলে ভালো হবে।",
+
+    "বসকে ডাকছেন? 😄 তিনি সময় পেলেই দেখবেন।",
+
+    "আপনার মেসেজ বসের কাছে পৌঁছে গেছে। 🌿",
+
+    "বস এখন available নন। একটু পরে চেষ্টা করুন।",
+
+    "ঠিক আছে, বসকে মেনশন করা হয়েছে। 🙂"
+
   ];
 
+  const reply =
+    replies[
+      Math.floor(
+        Math.random() * replies.length
+      )
+    ];
+
   return api.sendMessage(
-    replies[Math.floor(Math.random() * replies.length)],
+    reply,
     event.threadID,
     event.messageID
   );
 };
 
-module.exports.run = async function() {};
+module.exports.run = async function () {};
