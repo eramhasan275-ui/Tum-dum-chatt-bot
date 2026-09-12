@@ -25,10 +25,6 @@ module.exports.run = async function ({
 
   const { threadID } = event;
 
-  const request = global.nodemodule["request"];
-  const fs = global.nodemodule["fs-extra"];
-  const moment = require("moment-timezone");
-
   // ==============================
   // CONFIG
   // ==============================
@@ -111,7 +107,7 @@ module.exports.run = async function ({
 │
 ╰───────⭓
 
-╭⭓ ⪩ 𝗔𝗖𝗧𝗜𝗩𝗜𝗧𝗜𝗄𝗄𝗦 ⪨
+╭⭓ ⪩ 𝗔𝗖𝗧𝗜𝗩𝐈𝐓𝐈𝐄𝐒 ⪨
 │
 ├─ ⏳ 𝗔𝗰𝘁𝗶𝘃𝗲 𝗧𝗶𝗺𝗲 : ${hours}h ${minutes}m ${seconds}s
 ├─ 📣 𝗚𝗿𝗼𝘂𝗽𝘀 : ${totalThreads}
@@ -123,66 +119,12 @@ module.exports.run = async function ({
 `;
 
   // ==============================
-  // RANDOM BACKGROUND
-  // ==============================
-
-  const imgLinks = [
-    "https://i.imgur.com/gokzyKd.jpeg",
-    "https://i.imgur.com/g3hlQ0Z.jpeg",
-    "https://i.imgur.com/L7txp4M.jpeg",
-    "https://i.imgur.com/5dG8PS5.jpeg"
-  ];
-
-  const imgLink =
-    imgLinks[
-      Math.floor(Math.random() * imgLinks.length)
-    ];
-
-  // ==============================
-  // CACHE
-  // ==============================
-
-  const cacheDir =
-    __dirname + "/cache";
-
-  const imgPath =
-    cacheDir + "/info.jpg";
-
-  fs.ensureDirSync(cacheDir);
-
-  // ==============================
   // SEND MESSAGE
   // ==============================
 
-  const callback = () => {
-
-    if (!fs.existsSync(imgPath)) {
-      return api.sendMessage(
-        msg.trim(),
-        threadID,
-        event.messageID
-      );
-    }
-
-    return api.sendMessage(
-      {
-        body: msg.trim(),
-        attachment:
-          fs.createReadStream(imgPath)
-      },
-      threadID,
-      () => {
-        if (fs.existsSync(imgPath)) {
-          fs.unlinkSync(imgPath);
-        }
-      },
-      event.messageID
-    );
-  };
-
-  return request(encodeURI(imgLink))
-    .pipe(
-      fs.createWriteStream(imgPath)
-    )
-    .on("close", callback);
+  return api.sendMessage(
+    msg.trim(),
+    threadID,
+    event.messageID
+  );
 };
