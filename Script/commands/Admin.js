@@ -1,95 +1,69 @@
+/**
+ * Tum Dum - Owner Information
+ * Owner: Eram
+ */
+
+const moment = require("moment-timezone");
+
 module.exports.config = {
-  name: "prefix",
-  version: "1.0.0",
-  hasPermssion: 0,
-  credits: "Eram",
-  description: "Display the bot's prefix and owner info",
-  commandCategory: "Information",
-  usages: "",
-  cooldowns: 5
+    name: "admin",
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "Eram",
+    description: "Show Owner Information",
+    commandCategory: "Info",
+    usages: "admin",
+    cooldowns: 2
 };
 
-module.exports.handleEvent = async ({ event, api, Threads }) => {
-  var { threadID, messageID, body } = event;
-  if (!body) return;
+module.exports.run = async function ({ api, event }) {
 
-  var dataThread = await Threads.getData(threadID);
-  var data = dataThread.data || {};
+    const time = moment()
+        .tz("Asia/Dhaka")
+        .format("DD/MM/YYYY hh:mm:ss A");
 
-  const threadSetting =
-    global.data.threadData.get(parseInt(threadID)) || {};
+    const message = `
+╭━━━━━━━━━━━━━━━━━━━━╮
+┃
+┃       👑 𝐎𝐖𝐍𝐄𝐑 𝐈𝐍𝐅𝐎
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
 
-  const prefix =
-    threadSetting.PREFIX || global.config.PREFIX;
+╭──────── 𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋 ────────╮
+│
+│ 👤 Name       : Eram
+│ 🚹 Gender     : Male
+│ 🎂 Age        : 20+
+│ 🎓 Education  : HSC
+│
+╰───────────────────────────╯
 
-  const groupName =
-    dataThread.threadInfo?.threadName || "Unnamed Group";
+╭──────── 𝐂𝐎𝐍𝐓𝐀𝐂𝐓 ─────────╮
+│
+│ 💬 WhatsApp  : 01922361823
+│
+╰───────────────────────────╯
 
-  const triggerWords = [
-    "prefix",
-    "mprefix",
-    "mpre",
-    "bot prefix",
-    "what is the prefix",
-    "bot name",
-    "how to use bot",
-    "bot not working",
-    "bot is offline",
-    "prefx",
-    "prfix",
-    "perfix",
-    "bot not talking",
-    "where is bot",
-    "bot dead",
-    "bots dead",
-    "dấu lệnh",
-    "daulenh",
-    "what prefix",
-    "freefix",
-    "what is bot",
-    "what prefix bot",
-    "how use bot",
-    "where are the bots",
-    "where prefix"
-  ];
+╭───────── 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎 ────────╮
+│
+│ 🤖 Bot       : Tum Dum
+│ 👑 Owner     : Eram
+│ 🟢 Status    : Online
+│
+╰───────────────────────────╯
 
-  let lowerBody = body.toLowerCase().trim();
+╭──────── 𝐔𝐏𝐃𝐀𝐓𝐄 ─────────╮
+│
+│ 🕒 ${time}
+│
+╰───────────────────────────╯
 
-  if (triggerWords.includes(lowerBody)) {
+        ✦ 𝐓𝐔𝐌 𝐃𝐔𝐌 ✦
+`;
+
     return api.sendMessage(
-`🌟━━━━━━━━━━━━━━━━━🌟
-　　　『 𝐏𝐑𝐄𝐅𝐈𝐗 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍 』
-🌟━━━━━━━━━━━━━━━━━🌟
-
-『 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎 』
-
-➤ 𝗕𝗼𝘁 𝗣𝗿𝗲𝗳𝗶𝘅 : [ ${prefix} ]
-➤ 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲   : 𝐓𝐮𝐦 𝐃𝐮𝐦
-➤ 𝗕𝗼𝘁 𝗢𝘄𝗻𝗲𝗿  : 𝐄𝐫𝐚𝐦 hasan 
-
-『 𝐁𝐎𝐗 𝐈𝐍𝐅𝐎 』
-
-➤ 𝗕𝗼𝘅 𝗣𝗿𝗲𝗳𝗶𝘅 : ${prefix}
-➤ 𝗕𝗼𝘅 𝗡𝗮𝗺𝗲   : ${groupName}
-➤ 𝗕𝗼𝘅 𝗧𝗜𝗗     : ${threadID}
-
-『 𝐎𝐖𝐍𝐄𝐑 𝐈𝐍𝐅𝐎 』
-
-➤ 𝗢𝘄𝗻𝗲𝗿 𝗡𝗮𝗺𝗲 : 𝐄𝐫𝐚𝐦
-
-🌟━━━━━━━━━━━━━━━━━🌟
-　　　　𝗧𝗵𝗮𝗻𝗸 𝗬𝗼𝘂 𝗙𝗼𝗿 𝗨𝘀𝗶𝗻𝗴 𝗧𝘂𝗺 𝗗𝘂𝗺!
-🌟━━━━━━━━━━━━━━━━━🌟`,
-      threadID,
-      null
+        message.trim(),
+        event.threadID,
+        event.messageID
     );
-  }
 };
-
-module.exports.run = async ({ event, api }) => {
-  return api.sendMessage(
-    "Type 'prefix' or similar to get the bot info.",
-    event.threadID
-  );
-};
-
