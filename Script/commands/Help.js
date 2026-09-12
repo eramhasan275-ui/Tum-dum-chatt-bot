@@ -1,329 +1,303 @@
-/**
- * Tum Dum - Premium Help System
- * Owner: Eram
- * Text Only • No External Images • No Old Credits/Links
- */
+const axios = require("axios");
+
+const apiList = "https://gitlab.com/shahadat-sahu/sahu-api/-/raw/main/API.json";
+const getMainAPI = async () => (await axios.get(apiList)).data.simsimi;
 
 module.exports.config = {
-    name: "help",
-    version: "4.0.0",
-    hasPermssion: 0,
-    credits: "Eram",
-    description: "Premium command help system",
-    commandCategory: "System",
-    usages: "[command name/page number]",
-    cooldowns: 5,
-
-    envConfig: {
-        autoUnsend: true,
-        delayUnsend: 20
-    }
+ name: "baby",
+ version: "1.0.3",
+ hasPermssion: 0,
+ credits: "eram",
+ description: "Cute AI Baby Chatbot | Talk, Teach & Chat with Emotion ☢️",
+ commandCategory: "Chat",
+ usages: "[message/query]",
+ cooldowns: 0,
+ prefix: true
 };
 
-module.exports.languages = {
-    en: {
+module.exports.run = async function ({ api, event, args, Users }) {
+ try {
+ const uid = event.senderID;
+ const senderName = await Users.getNameUser(uid);
+ const rawQuery = args.join(" ");
+ const query = rawQuery.toLowerCase();
+ const simsim = await getMainAPI();
 
-        moduleInfo: `╭━━━〔 𝐓𝐔𝐌 𝐃𝐔𝐌 〕━━━╮
-┃
-┃  ✦ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐈𝐍𝐅𝐎
-┃
-┣━━━━━━━━━━━━━━━━━━━━┫
-┃  ◈ Name      : %1
-┃  ◈ Usage     : %2
-┃  ◈ Description : %3
-┃  ◈ Permission: %4
-┃  ◈ Credit    : %5
-┃  ◈ Category  : %6
-┃  ◈ Cooldown  : %7s
-┃
-┣━━━━━━━━━━━━━━━━━━━━┫
-┃  ⚙ Prefix    : %8
-┃  🤖 Bot       : Tum Dum
-┃  👑 Owner     : Eram
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯`,
+ if (!query) {
+ const ran = ["Bolo baby", "hum"];
+ const r = ran[Math.floor(Math.random() * ran.length)];
+ return api.sendMessage(r, event.threadID, (err, info) => {
+ if (!err) {
+ global.client.handleReply.push({
+ name: module.exports.config.name,
+ messageID: info.messageID,
+ author: event.senderID,
+ type: "simsimi"
+ });
+ }
+ });
+ }
 
-        helpList:
-            "There are %1 commands. Use \"%2help <command>\" for details.",
+ const command = args[0].toLowerCase();
 
-        user: "User",
-        adminGroup: "Admin Group",
-        adminBot: "Admin Bot"
-    }
+ if (["remove", "rm"].includes(command)) {
+ const parts = rawQuery.replace(/^(remove|rm)\s*/i, "").split(" - ");
+ if (parts.length < 2) return api.sendMessage("Use: remove [Question] - [Reply]", event.threadID, event.messageID);
+ const [ask, ans] = parts.map(p => p.trim());
+ const res = await axios.get(`${simsim}/delete?ask=${encodeURIComponent(ask)}&ans=${encodeURIComponent(ans)}`);
+ return api.sendMessage(res.data.message, event.threadID, event.messageID);
+ }
+
+ if (command === "list") {
+ const res = await axios.get(`${simsim}/list`);
+ if (res.data.code === 200) {
+ return api.sendMessage(
+ `♾ Total Questions Learned: ${res.data.totalQuestions}\n★ Total Replies Stored: ${res.data.totalReplies}\nDeveloper: ${res.data.author}`,
+ event.threadID, event.messageID
+ );
+ } else return api.sendMessage(`Error: ${res.data.message}`, event.threadID, event.messageID);
+ }
+
+ if (command === "edit") {
+ const parts = rawQuery.replace(/^edit\s*/i, "").split(" - ");
+ if (parts.length < 3) return api.sendMessage("Use: edit [Q] - [Old] - [New]", event.threadID, event.messageID);
+ const [ask, oldReply, newReply] = parts.map(p => p.trim());
+ const res = await axios.get(`${simsim}/edit?ask=${encodeURIComponent(ask)}&old=${encodeURIComponent(oldReply)}&new=${encodeURIComponent(newReply)}`);
+ return api.sendMessage(res.data.message, event.threadID, event.messageID);
+ }
+
+ if (command === "teach") {
+ const parts = rawQuery.replace(/^teach\s*/i, "").split(" - ");
+ if (parts.length < 2) return api.sendMessage("Use: teach [Q] - [Reply]", event.threadID, event.messageID);
+ const [ask, ans] = parts.map(p => p.trim());
+ const groupID = event.threadID;
+ let groupName = event.threadName ? event.threadName : "";
+ try {
+ if (!groupName && groupID != uid) {
+ const threadInfo = await api.getThreadInfo(groupID);
+ if (threadInfo?.threadName) groupName = threadInfo.threadName;
+ }
+ } catch {}
+
+ let teachUrl = `${simsim}/teach?ask=${encodeURIComponent(ask)}&ans=${encodeURIComponent(ans)}&senderID=${uid}&senderName=${encodeURIComponent(senderName)}&groupID=${encodeURIComponent(groupID)}`;
+ if (groupName) teachUrl += `&groupName=${encodeURIComponent(groupName)}`;
+ const res = await axios.get(teachUrl);
+ return api.sendMessage(res.data.message, event.threadID, event.messageID);
+ }
+
+ const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(query)}&senderName=${encodeURIComponent(senderName)}`);
+ const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
+
+ for (const rep of replies) {
+ await new Promise(resolve => {
+ api.sendMessage(rep, event.threadID, (err, info) => {
+ if (!err) {
+ global.client.handleReply.push({
+ name: module.exports.config.name,
+ messageID: info.messageID,
+ author: event.senderID,
+ type: "simsimi"
+ });
+ }
+ resolve();
+ }, event.messageID);
+ });
+ }
+
+ } catch (err) {
+ return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
+ }
 };
 
+module.exports.handleReply = async function ({ api, event, Users, handleReply }) {
+ try {
+ const senderName = await Users.getNameUser(event.senderID);
+ const replyText = event.body ? event.body.toLowerCase() : "";
+ if (!replyText) return;
+ const simsim = await getMainAPI();
+ const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(replyText)}&senderName=${encodeURIComponent(senderName)}`);
+ const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
 
-// ==========================================
-// HANDLE EVENT
-// ==========================================
+ for (const rep of replies) {
+ await new Promise(resolve => {
+ api.sendMessage(rep, event.threadID, (err, info) => {
+ if (!err) {
+ global.client.handleReply.push({
+ name: module.exports.config.name,
+ messageID: info.messageID,
+ author: event.senderID,
+ type: "simsimi"
+ });
+ }
+ resolve();
+ }, event.messageID);
+ });
+ }
 
-module.exports.handleEvent = function ({
-    api,
-    event,
-    getText
-}) {
-
-    const { commands } = global.client;
-
-    const {
-        threadID,
-        messageID,
-        body
-    } = event;
-
-    if (
-        !body ||
-        typeof body !== "string" ||
-        !body.toLowerCase().startsWith("help")
-    ) {
-        return;
-    }
-
-    const splitBody =
-        body
-            .slice(body.toLowerCase().indexOf("help"))
-            .trim()
-            .split(/\s+/);
-
-    if (
-        splitBody.length < 2 ||
-        !commands.has(
-            splitBody[1].toLowerCase()
-        )
-    ) {
-        return;
-    }
-
-    const threadSetting =
-        global.data.threadData.get(
-            parseInt(threadID)
-        ) || {};
-
-    const command =
-        commands.get(
-            splitBody[1].toLowerCase()
-        );
-
-    const prefix =
-        threadSetting.PREFIX ||
-        global.config.PREFIX;
-
-    const detail =
-        getText(
-            "moduleInfo",
-            command.config.name,
-            command.config.usages ||
-                "Not Provided",
-            command.config.description ||
-                "Not Provided",
-            command.config.hasPermssion,
-            command.config.credits ||
-                "Unknown",
-            command.config.commandCategory ||
-                "Unknown",
-            command.config.cooldowns ||
-                0,
-            prefix
-        );
-
-    return api.sendMessage(
-        detail,
-        threadID,
-        messageID
-    );
+ } catch (err) {
+ return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
+ }
 };
 
+module.exports.handleEvent = async function ({ api, event, Users }) {
+ try {
+ const raw = event.body ? event.body.toLowerCase().trim() : "";
+ if (!raw) return;
 
-// ==========================================
-// MAIN HELP COMMAND
-// ==========================================
+ const senderName = await Users.getNameUser(event.senderID);
+ const senderID = event.senderID;
 
-module.exports.run = function ({
-    api,
-    event,
-    args,
-    getText
-}) {
+ const simsim = await getMainAPI();
 
-    const { commands } = global.client;
-
-    const {
-        threadID,
-        messageID
-    } = event;
-
-    const threadSetting =
-        global.data.threadData.get(
-            parseInt(threadID)
-        ) || {};
-
-    const prefix =
-        threadSetting.PREFIX ||
-        global.config.PREFIX;
-
-
-    // ======================================
-    // COMMAND DETAILS
-    // ======================================
-
-    if (
-        args[0] &&
-        commands.has(
-            args[0].toLowerCase()
-        )
-    ) {
-
-        const command =
-            commands.get(
-                args[0].toLowerCase()
-            );
-
-        const detailText =
-            getText(
-                "moduleInfo",
-
-                command.config.name,
-
-                command.config.usages ||
-                    "Not Provided",
-
-                command.config.description ||
-                    "Not Provided",
-
-                command.config.hasPermssion,
-
-                command.config.credits ||
-                    "Unknown",
-
-                command.config.commandCategory ||
-                    "Unknown",
-
-                command.config.cooldowns ||
-                    0,
-
-                prefix
-            );
-
-        return api.sendMessage(
-            detailText,
-            threadID,
-            messageID
-        );
-    }
-
-
-    // ======================================
-    // COMMAND LIST
-    // ======================================
-
-    const arrayInfo =
-        Array.from(commands.keys())
-            .filter(
-                cmdName =>
-                    cmdName &&
-                    cmdName.trim() !== ""
-            )
-            .sort();
-
-
-    const page =
-        Math.max(
-            parseInt(args[0]) || 1,
-            1
-        );
-
-
-    const commandsPerPage = 20;
-
-
-    const totalPages =
-        Math.max(
-            Math.ceil(
-                arrayInfo.length /
-                commandsPerPage
-            ),
-            1
-        );
-
-
-    const currentPage =
-        Math.min(
-            page,
-            totalPages
-        );
+const greetings = [
+        "বেশি bot Bot করলে leave নিবো কিন্তু😒😒",
+        "শুনবো না😼 তুমি আমার বস সাহু কে প্রেম করাই দাও নাই🥺পচা তুমি🥺",
+        "আমি আবাল দের সাথে কথা বলি না,ok😒",
+        "এতো ডেকো না,প্রেম এ পরে যাবো তো🙈",
+        "Bolo Babu, তুমি কি আমাকে ভালোবাসো? 🙈💋",
+        "বার বার ডাকলে মাথা গরম হয়ে যায় কিন্তু😑",
+        "হ্যা বলো😒, তোমার জন্য কি করতে পারি😐😑?",
+        "এতো ডাকছিস কেন?গালি শুনবি নাকি? 🤬",
+        "I love you janu🥰",
+        "আরে Bolo আমার জান ,কেমন আছো?😚",
+        "আজ বট বলে অসম্মান করছি,😰😿",
+        "Hop beda😾,Boss বল boss😼",
+        "চুপ থাক ,নাই তো তোর দাত ভেগে দিবো কিন্তু",
+        
+        "আমাকে বট না বলে ,  জানু বল জানু 😘",
+        "বার বার Disturb করছিস কোনো😾,আমার জানুর সাথে ব্যাস্ত আছি😋",
+        "আরে বলদ এতো ডাকিস কেন🤬",
+        "আমাকে ডাকলে ,আমি কিন্তু তুম তুম tedao করে দিবো😘",
+        "আমারে এতো ডাকিস না আমি মজা করার mood এ নাই এখন😒",
+        "হ্যাঁ জানু , এইদিক এ আসো থু দেই🤭 ",
+        "দূরে যা, তোর কোনো কাজ নাই, শুধু bot bot করিস 😉😋🤣",
+        "তোর কথা তোর বাড়ি কেউ শুনে না ,তো আমি কোনো শুনবো ?🤔😂",
+        "আমাকে ডেকো না,আমি  ব্যাস্ত আছি",
+        "কি হলো , মিস্টেক করচ্ছিস নাকি🤣",
+        "বলো কি বলবা, সবার সামনে বলবা নাকি?🤭🤏",
+        
+        "কালকে দেখা করিস তো একটু 😈",
+        "হা বলো, শুনছি আমি 😏",
+        "আর কত বার ডাকবি ,শুনছি তো",
+        "হুম বলো কি বলবে😒",
+        "বলো কি করতে পারি তোমার জন্য",
+        "আমি তো অন্ধ কিছু দেখি না🐸 😎",
+        "আরে বোকা বট না জানু বল জানু😌",
+        "বলো জানু 🌚",
+        "তোর কি চোখে পড়ে না আমি ব্যাস্ত আছি😒",
+        "হুম জান তোমার ওই খানে উম্মহ😑😘",
+        "আহ শুনা আমার তোমার অলিতে গলিতে উম্মাহ😇😘",
+        "jang hanga korba😒😬",
+        "হুম জান তোমাকে আমি রাতে ভালোবাসি উম্মমাহ😷😘",
+        "আসসালামু আলাইকুম বলেন আপনার জন্য কি করতে পারি..!🥰",
+      
+        "আমাকে এতো না ডেকে বস ইরাম কে  কে একটা গফ দে 🙄",
+        "আমাকে এতো না ডেকছ কেন ভলো টালো বাসো নাকি🤭🙈",
+        "🌻🌺💚-আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ-💚🌺🌻",
+        "আমি এখন  বিজি আছি আমাকে ডাকবেন না-😕😏 ধন্যবাদ-🤝🌻",
+        "আমাকে না ডেকে একটা জি এফ দাও-😽🫶🌺",
+        "ঝাং থুমালে আইলাপিউ পেপি-💝😽",
+        "উফফ বুঝলাম না এতো ডাকছেন কেনো-😤😡",
+        "জান তোমার বান্ধবী রে আমার হাতে তুলে দিবা-🙊🙆‍♂",
+        "আজকে আমার মন ভালো নেই তাই আমারে ডাকবেন না-😪🤧",
+        "ঝাং 🫵থুমালে য়ামি রাইতে পালুপাসি উম্মম্মাহ-🌺",
+        
+        "স্বপ্ন তোমারে নিয়ে দেখতে চাই তুমি যদি আমার হয়ে থেকে যাও-💝🌺🌻",
+        "জান মারামারি করবা-👊🏻",
+        "ইউটিউব দেখে অনেক ভালোবাসা শিখছি তোমার জন্য-🙊🙈😽",
+        "ইসস এতো ডাকো কেনো লজ্জা লাগে তো-🙈🖤🌼",
+        "তোমারে জন্যে এতো এতো চকলেট-🥰😽🫶 আমার বস ইরাম'র জন্য দোয়া করবেন-💝💚🌺🌻",
+        
+        "আমার জান তুমি শুধু আমার আমি তোমারে ৩৬৫ দিন ভালোবাসি-💝🌺😽",
+        
+        "জান আমাকে কে বিয়ে করবা-🙊😘🥳",
+        "-আন্টি-🙆-আপনার মেয়ে-👰‍♀️-রাতে আমারে ভিদু কল দিতে বলে🫣-🥵🤤💦",
+        "oii-🥺🥹-এক🥄 চামচ ভালোবাসা দিবা-🤏🏻🙂",
+        "-আপনার সহায় সম্পত্তি ফিতরা হিসেবে আমার বস ইরাম কে দান করেন-🥱🐰🍒",
+        "-ও মিম ও মিম-😇-তুমি কেন চুরি করলা সাদিয়ার ফর্সা হওয়ার ক্রীম-🌚🤧",
+        
+        "-guyys-🤗-যৌবনের কসম দিয়ে আমারে 𝐁𝐥𝐚𝐜𝐤𝐦𝐚𝐢𝐥 করা হচ্ছে-🥲🤦‍♂️🤧",
+        "-𝗢𝗶𝗶 আন্টি-🙆‍♂️-তোমার মেয়ে চোখ মারে-🥺🥴🐸",
+        "তাকাই আছো কেন চুমু দিবা-🙄🐸😘",
+        "আজকে প্রপোজ করে দেখো রাজি হইয়া যামু-😌🤗😇",
+        "-আমার গল্পে তোমার নানি সেরা-🙊🙆‍♂️🤗",
+        "কি বেপার আপনি শ্বশুর বাড়িতে যাচ্ছেন না কেন-🤔🥱🌻",
+        "দিনশেষে পরের 𝐁𝐎𝐖 সুন্দর-☹️🤧",
+        "-তাবিজ কইরা হইলেও ফ্রেম এক্কান করমুই তাতে যা হই হোক-🤧🥱🌻",
+        "-ছোটবেলা ভাবতাম বিয়ে করলে অটোমেটিক বাচ্চা হয়-🥱-ওমা এখন দেখি কাহিনী অন্যরকম-😦🙂🌻",
+        
+        "-আজ একটা বিন নেই বলে ফেসবুকের নাগিন-🤧-গুলো খুব জ্বালায়-🐸🥲",
+        " তোরা বিড়ি খাস কেন বুঝা আমারে-😑😒🐸⚒️",
+        
+        "—হাজারো লুচ্চা লুচ্চির ভিরে-🙊🥵আমার বস ইরাম এক মিচকা শয়তান-🥱🤗🙆‍♂️",
+        "-রূপের অহংকার করো না-🙂❤️চকচকে সূর্যটাও দিনশেষে অন্ধকারে পরিণত হয়-🤗💜",
+        "সুন্দর মাইয়া মানেই-🥱আমার বস eram এর বউ-😽🫶আর বাকি গুলো আমার বেয়াইন-🙈🐸🤗",
+        "এত অহংকার করে লাভ নেই-🌸মৃত্যুটা নিশ্চিত শুধু সময়টা অ'নিশ্চিত-🖤🙂",
+        "-দিন দিন কিছু মানুষের কাছে অপ্রিয় হয়ে যাইতেছি-🙂😿🌸",
+        
+        
+        "হুদাই আমারে শয়তানে লারে-😝😑☹️",
+        "-𝗜 𝗟𝗢𝗩𝗘 𝗬𝗢𝗨-😽-আহারে ভাবছো তোমারে প্রোপজ করছি-🥴-থাপ্পর দিয়া কিডনী লক করে দিব-😒-ভুল পড়া বের করে দিবো-🤭🐸",
+        "-আমি একটা দুধের শিশু-😇-🫵𝗬𝗢𝗨🐸💦",
+        "-কতদিন হয়ে গেলো বিছনায় মুতি না-😿-মিস ইউ নেংটা কাল-🥺🤧",
+        "-বালিকা━👸-𝐃𝐨 𝐲𝐨𝐮-🫵-বিয়া-𝐦𝐞-😽-আমি তোমাকে-😻-আম্মু হইতে সাহায্য করব-🙈🥱",
+        "-এই আন্টির মেয়ে-🫢🙈-𝐔𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐦𝐡-😽🫶-আসলেই তো স্বাদ-🌚-এতো স্বাদ কেন-🤔-সেই স্বাদ-😋",
+        "-ইস কেউ যদি বলতো-🙂-আমার শুধু তোমাকেই লাগবে-💜🌸",
+        "-ওই বেডি তোমার বাসায় না আমার বস eram মেয়ে দেখতে গেছিলো-🙃-নাস্তা আনারস আর দুধ দিছো-🙄🤦‍♂️-বইন কইলেই তো হয় বয়ফ্রেন্ড আছে-🥺🤦‍♂-আমার বস eram কে জানে মারার কি দরকার-🙄🤧",
+        "-একদিন সে ঠিকই ফিরে তাকাবে-😇-আর মুচকি হেসে বলবে ওর মতো আর কেউ ভালবাসেনি-🙂😅",
+        "-হুদাই গ্রুপে আছি-🥺🐸-কেও ইনবক্সে নক দিয়ে বলে না জান তোমারে আমি অনেক ভালোবাসি-🥺🤧",
+        "কি'রে গ্রুপে দেখি একটাও বেডি নাই-🤦‍🥱💦",
+        "-দেশের সব কিছুই চুরি হচ্ছে-🙄-শুধু আমার বস eram এর মনটা ছাড়া-🥴😑😏",
+        "-🫵তোমারে প্রচুর ভাল্লাগে-😽-সময় মতো প্রপোজ করমু বুঝছো-🔨😼-ছিট খালি রাইখো- 🥱🐸🥵",
+        "-আজ থেকে আর কাউকে পাত্তা দিমু না -!😏-কারণ আমি ফর্সা হওয়ার ক্রিম কিনছি -!🙂🐸"
+      ];
 
 
-    const start =
-        commandsPerPage *
-        (currentPage - 1);
+ if (
+ raw === "baby" || raw === "bot" || raw === "bby" ||
+ raw === "jan" || raw === "xan" || raw === "জান" ||
+ raw === "বট" || raw === "বেবি"
+ ) {
+ const randomReply = greetings[Math.floor(Math.random() * greetings.length)];
+ return api.sendMessage(randomReply, event.threadID, (err, info) => {
+ if (!err) {
+ global.client.handleReply.push({
+ name: module.exports.config.name,
+ messageID: info.messageID,
+ author: senderID,
+ type: "simsimi"
+ });
+ }
+ }, event.messageID);
+ }
 
+ if (
+ raw.startsWith("baby ") || raw.startsWith("bot ") || raw.startsWith("bby ") ||
+ raw.startsWith("jan ") || raw.startsWith("xan ") ||
+ raw.startsWith("জান ") || raw.startsWith("বট ") || raw.startsWith("বেবি ")
+ ) {
+ const query = raw.replace(/^baby\s+|^bot\s+|^bby\s+|^jan\s+|^xan\s+|^জান\s+|^বট\s+|^বেবি\s+/i, "").trim();
+ if (!query) return;
 
-    const helpView =
-        arrayInfo.slice(
-            start,
-            start + commandsPerPage
-        );
+ const res = await axios.get(`${simsim}/simsimi?text=${encodeURIComponent(query)}&senderName=${encodeURIComponent(senderName)}`);
+ const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
 
+ for (const rep of replies) {
+ await new Promise(resolve => {
+ api.sendMessage(rep, event.threadID, (err, info) => {
+ if (!err) {
+ global.client.handleReply.push({
+ name: module.exports.config.name,
+ messageID: info.messageID,
+ author: senderID,
+ type: "simsimi"
+ });
+ }
+ resolve();
+ }, event.messageID);
+ });
+ }
+ }
 
-    const commandList =
-        helpView.length > 0
-
-            ? helpView
-                .map(
-                    (cmdName, index) =>
-                        `┃  ${String(index + 1).padStart(2, "0")}  ›  ${cmdName}`
-                )
-                .join("\n")
-
-            : "┃  — No commands found";
-
-
-    // ======================================
-    // PREMIUM HELP DESIGN
-    // ======================================
-
-    const text = `
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃
-┃       ✦ 𝐓𝐔𝐌 𝐃𝐔𝐌 ✦
-┃       𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐂𝐄𝐍𝐓𝐄𝐑
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-
-╭──────── 𝐎𝐕𝐄𝐑𝐕𝐈𝐄𝐖 ────────╮
-│
-│  📚 Commands : ${arrayInfo.length}
-│  📄 Page     : ${currentPage} / ${totalPages}
-│  ⚙ Prefix    : ${prefix}
-│
-╰───────────────────────────╯
-
-╭──────── 𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒 ────────╮
-${commandList}
-╰───────────────────────────╯
-
-╭────────── 𝐁𝐎𝐓 ───────────╮
-│
-│  🤖 Bot   : Tum Dum
-│  👑 Owner : Eram
-│  🟢 Status: Online
-│
-╰───────────────────────────╯
-
-╭──────── 𝐔𝐒𝐀𝐆𝐄 ──────────╮
-│
-│  ${prefix}help <command>
-│  ${prefix}help <page>
-│
-╰───────────────────────────╯
-
-        ✦ 𝐓𝐔𝐌 𝐃𝐔𝐌 ✦
-`;
-
-
-    return api.sendMessage(
-        text.trim(),
-        threadID,
-        messageID
-    );
+ } catch {}
 };
