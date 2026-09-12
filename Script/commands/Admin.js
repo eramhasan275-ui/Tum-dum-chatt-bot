@@ -65,7 +65,7 @@ module.exports.handleEvent = async ({ event, api, Threads }) => {
 
 ➤ 𝗕𝗼𝘁 𝗣𝗿𝗲𝗳𝗶𝘅 : [ ${prefix} ]
 ➤ 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲   : 𝐓𝐮𝐦 𝐃𝐮𝐦
-➤ 𝗕𝗼𝘁 𝗢𝘄𝗻𝗲𝗿  : 𝐄𝐫𝐚𝐦
+➤ 𝗕𝗼𝘁 𝗢𝘄𝗻𝗲𝗿  : 𝐄𝐫𝐚𝐦 hasan 
 
 『 𝐁𝐎𝐗 𝐈𝐍𝐅𝐎 』
 
