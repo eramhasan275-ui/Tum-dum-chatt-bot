@@ -1,14 +1,16 @@
-const fs = require("fs-extra");
-const request = require("request");
-const path = require("path");
+/**
+ * Tum Dum - Premium Help System
+ * Owner: Eram
+ * Text Only • No External Images • No Old Credits/Links
+ */
 
 module.exports.config = {
     name: "help",
-    version: "2.0.0",
+    version: "4.0.0",
     hasPermssion: 0,
     credits: "Eram",
-    description: "Shows all commands with details",
-    commandCategory: "system",
+    description: "Premium command help system",
+    commandCategory: "System",
     usages: "[command name/page number]",
     cooldowns: 5,
 
@@ -21,67 +23,34 @@ module.exports.config = {
 module.exports.languages = {
     en: {
 
-        moduleInfo: `╭━━━━━━━━━━━━━━━━╮
-┃ ✨ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐈𝐍𝐅𝐎 ✨
-┣━━━━━━━━━━━━━━━━┫
-┃ 🔖 Name: %1
-┃ 📄 Usage: %2
-┃ 📜 Description: %3
-┃ 🔑 Permission: %4
-┃ 👨‍💻 Credit: %5
-┃ 📂 Category: %6
-┃ ⏳ Cooldown: %7s
-┣━━━━━━━━━━━━━━━━┫
-┃ ⚙ Prefix: %8
-┃ 🤖 Bot Name: Tum Dum
-┃ 👑 Owner: Eram
-╰━━━━━━━━━━━━━━━━╯`,
+        moduleInfo: `╭━━━〔 𝐓𝐔𝐌 𝐃𝐔𝐌 〕━━━╮
+┃
+┃  ✦ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐈𝐍𝐅𝐎
+┃
+┣━━━━━━━━━━━━━━━━━━━━┫
+┃  ◈ Name      : %1
+┃  ◈ Usage     : %2
+┃  ◈ Description : %3
+┃  ◈ Permission: %4
+┃  ◈ Credit    : %5
+┃  ◈ Category  : %6
+┃  ◈ Cooldown  : %7s
+┃
+┣━━━━━━━━━━━━━━━━━━━━┫
+┃  ⚙ Prefix    : %8
+┃  🤖 Bot       : Tum Dum
+┃  👑 Owner     : Eram
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯`,
 
         helpList:
-            "[ There are %1 commands. Use: \"%2help commandName\" to view more. ]",
+            "There are %1 commands. Use \"%2help <command>\" for details.",
 
         user: "User",
         adminGroup: "Admin Group",
         adminBot: "Admin Bot"
     }
 };
-
-
-// ==========================================
-// HELP IMAGES
-// ==========================================
-
-const helpImages = [
-    "https://i.imgur.com/gokzyKd.jpeg",
-    "https://i.imgur.com/g3hlQ0Z.jpeg",
-    "https://i.imgur.com/L7txp4M.jpeg",
-    "https://i.imgur.com/5dG8PS5.jpeg"
-];
-
-
-// ==========================================
-// DOWNLOAD RANDOM IMAGE
-// ==========================================
-
-function downloadImages(callback) {
-
-    const randomUrl =
-        helpImages[
-            Math.floor(Math.random() * helpImages.length)
-        ];
-
-    const cacheDir =
-        path.join(__dirname, "cache");
-
-    const filePath =
-        path.join(cacheDir, "help_random.jpg");
-
-    fs.ensureDirSync(cacheDir);
-
-    request(randomUrl)
-        .pipe(fs.createWriteStream(filePath))
-        .on("close", () => callback([filePath]));
-}
 
 
 // ==========================================
@@ -95,6 +64,7 @@ module.exports.handleEvent = function ({
 }) {
 
     const { commands } = global.client;
+
     const {
         threadID,
         messageID,
@@ -111,13 +81,15 @@ module.exports.handleEvent = function ({
 
     const splitBody =
         body
-            .slice(body.indexOf("help"))
+            .slice(body.toLowerCase().indexOf("help"))
             .trim()
             .split(/\s+/);
 
     if (
         splitBody.length < 2 ||
-        !commands.has(splitBody[1].toLowerCase())
+        !commands.has(
+            splitBody[1].toLowerCase()
+        )
     ) {
         return;
     }
@@ -139,56 +111,26 @@ module.exports.handleEvent = function ({
     const detail =
         getText(
             "moduleInfo",
-
             command.config.name,
-
             command.config.usages ||
                 "Not Provided",
-
             command.config.description ||
                 "Not Provided",
-
             command.config.hasPermssion,
-
             command.config.credits ||
                 "Unknown",
-
             command.config.commandCategory ||
                 "Unknown",
-
             command.config.cooldowns ||
                 0,
-
             prefix
         );
 
-    downloadImages(files => {
-
-        const attachments =
-            files.map(file =>
-                fs.createReadStream(file)
-            );
-
-        api.sendMessage(
-            {
-                body: detail,
-                attachment: attachments
-            },
-            threadID,
-            () => {
-
-                files.forEach(file => {
-
-                    if (fs.existsSync(file)) {
-                        fs.unlinkSync(file);
-                    }
-
-                });
-
-            },
-            messageID
-        );
-    });
+    return api.sendMessage(
+        detail,
+        threadID,
+        messageID
+    );
 };
 
 
@@ -262,36 +204,11 @@ module.exports.run = function ({
                 prefix
             );
 
-        downloadImages(files => {
-
-            const attachments =
-                files.map(file =>
-                    fs.createReadStream(file)
-                );
-
-            api.sendMessage(
-                {
-                    body: detailText,
-                    attachment: attachments
-                },
-                threadID,
-                () => {
-
-                    files.forEach(file => {
-
-                        if (fs.existsSync(file)) {
-                            fs.unlinkSync(file);
-                        }
-
-                    });
-
-                },
-                messageID
-            );
-
-        });
-
-        return;
+        return api.sendMessage(
+            detailText,
+            threadID,
+            messageID
+        );
     }
 
 
@@ -316,13 +233,14 @@ module.exports.run = function ({
         );
 
 
-    const numberOfOnePage = 20;
+    const commandsPerPage = 20;
+
 
     const totalPages =
         Math.max(
             Math.ceil(
                 arrayInfo.length /
-                numberOfOnePage
+                commandsPerPage
             ),
             1
         );
@@ -336,78 +254,76 @@ module.exports.run = function ({
 
 
     const start =
-        numberOfOnePage *
+        commandsPerPage *
         (currentPage - 1);
 
 
     const helpView =
         arrayInfo.slice(
             start,
-            start + numberOfOnePage
+            start + commandsPerPage
         );
 
 
-    const msg =
+    const commandList =
         helpView.length > 0
+
             ? helpView
                 .map(
-                    cmdName =>
-                        `┃ ✪ ${cmdName}`
+                    (cmdName, index) =>
+                        `┃  ${String(index + 1).padStart(2, "0")}  ›  ${cmdName}`
                 )
                 .join("\n")
-            : "┃ ❌ No commands found";
+
+            : "┃  — No commands found";
 
 
     // ======================================
-    // FINAL HELP MESSAGE
+    // PREMIUM HELP DESIGN
     // ======================================
 
     const text = `
-╭━━━━━━━━━━━━━━━━╮
-┃ 📜 𝐓𝐔𝐌 𝐃𝐔𝐌 𝐇𝐄𝐋𝐏 📜
-┣━━━━━━━━━━━━━━━━┫
-┃ 📄 Page: ${currentPage}/${totalPages}
-┃ 🧮 Total: ${arrayInfo.length}
-┣━━━━━━━━━━━━━━━━┫
-${msg}
-┣━━━━━━━━━━━━━━━━┫
-┃ ⚙ Prefix: ${prefix}
-┃ 🤖 Bot Name: Tum Dum
-┃ 👑 Owner: Eram
-╰━━━━━━━━━━━━━━━━╯
+╭━━━━━━━━━━━━━━━━━━━━━━━━━━╮
+┃
+┃       ✦ 𝐓𝐔𝐌 𝐃𝐔𝐌 ✦
+┃       𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐂𝐄𝐍𝐓𝐄𝐑
+┃
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+
+╭──────── 𝐎𝐕𝐄𝐑𝐕𝐈𝐄𝐖 ────────╮
+│
+│  📚 Commands : ${arrayInfo.length}
+│  📄 Page     : ${currentPage} / ${totalPages}
+│  ⚙ Prefix    : ${prefix}
+│
+╰───────────────────────────╯
+
+╭──────── 𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒 ────────╮
+${commandList}
+╰───────────────────────────╯
+
+╭────────── 𝐁𝐎𝐓 ───────────╮
+│
+│  🤖 Bot   : Tum Dum
+│  👑 Owner : Eram
+│  🟢 Status: Online
+│
+╰───────────────────────────╯
+
+╭──────── 𝐔𝐒𝐀𝐆𝐄 ──────────╮
+│
+│  ${prefix}help <command>
+│  ${prefix}help <page>
+│
+╰───────────────────────────╯
+
+        ✦ 𝐓𝐔𝐌 𝐃𝐔𝐌 ✦
 `;
 
 
-    // ======================================
-    // SEND HELP
-    // ======================================
-
-    downloadImages(files => {
-
-        const attachments =
-            files.map(file =>
-                fs.createReadStream(file)
-            );
-
-        api.sendMessage(
-            {
-                body: text.trim(),
-                attachment: attachments
-            },
-            threadID,
-            () => {
-
-                files.forEach(file => {
-
-                    if (fs.existsSync(file)) {
-                        fs.unlinkSync(file);
-                    }
-
-                });
-
-            },
-            messageID
-        );
-
-    });
+    return api.sendMessage(
+        text.trim(),
+        threadID,
+        messageID
+    );
 };
