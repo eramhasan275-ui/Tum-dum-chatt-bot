@@ -1,424 +1,535 @@
 /**
- * Tum Dum - Manual Smart Baby Chat
- * Owner: Eram
- *
+ * ============================================
+ * TUM DUM - ADVANCED BABY CHAT
+ * Owner: ইরাম
  * No External API
+ * ============================================
  */
+
+const BOT_NAME = "Tum Dum";
+const OWNER_NAME = "ইরাম";
 
 module.exports.config = {
   name: "baby",
-  version: "3.0.0",
+  version: "4.0.0",
   hasPermssion: 0,
-  credits: "Eram",
-  description: "Manual smart chatbot with Bangla & English replies",
+  credits: "ইরাম",
+  description: "Advanced manual conversation system",
   commandCategory: "Chat",
-  usages: "[message/query]",
-  cooldowns: 0,
+  usages: "[message]",
+  cooldowns: 1,
   prefix: true
 };
 
-const replies = [
-  "বেশি বেশি ডাকলে কিন্তু আমি লজ্জা পেয়ে যাবো 🙈",
-  "হ্যাঁ বলো, তোমার জন্য কী করতে পারি? 🙂",
-  "এতো ডাকছো কেন? আমি তো শুনছিই 😌",
-  "বলো, কী বলতে চাও? 🌿",
-  "আসসালামু আলাইকুম 🌸 বলো, কী খবর?",
-  "আজ কেমন আছো? 😊",
-  "আমি আছি, তুমি বলো। 🤍",
-  "এতো মেনশন না করে সরাসরি বলো কী হয়েছে 😄",
-  "হুম বলো, শুনছি। 👀",
-  "তোমার কথা মনোযোগ দিয়ে শুনছি। 🙂",
-  "কী ব্যাপার? আমাকে মনে পড়লো নাকি? 😌",
-  "বলো, আমি এখানেই আছি। 🌱",
-  "ডাকলে যখন, কিছু একটা বলতেই হবে কিন্তু 😄",
-  "আমি প্রস্তুত, বলো শুরু করো। 😌",
-  "কী খবর তোমার? 🌿",
-  "আজকের দিনটা কেমন গেল?",
-  "মন খারাপ নাকি? চাইলে আমার সাথে কথা বলতে পারো। 🤍",
-  "হাসো একটু, জীবনটা সুন্দর। 😊",
-  "চুপচাপ কেন? কিছু বলো। 🙂",
-  "আমি কিন্তু তোমার কথা শুনতে প্রস্তুত। 👀",
-  "বলো, কী নিয়ে গল্প করবে আজ?",
-  "তোমার মেসেজ পেয়েছি। 😌",
-  "হুমম... বলো, শুনছি। 🌸"
-];
 
-const fallbackReplies = [
+// ============================================
+// MEMORY
+// ============================================
 
-  "হুম, বুঝলাম। 🙂",
-  "আচ্ছা, তারপর? 👀",
-  "ঠিক আছে। 😌",
-  "বুঝতে পারছি। 🌿",
-  "হুমম... interesting! 😄",
-  "আরও একটু বিস্তারিত বলো।",
-  "ওহ, তাই নাকি? 👀",
-  "আচ্ছা বলো, শুনছি।",
-  "ঠিক আছে, তোমার কথাটা মনে রাখলাম। 🙂",
+const conversationMemory = new Map();
 
-  "হুম, তারপর কী হলো? 😌",
-  "বাহ, বেশ interesting কথা! 👀",
-  "আচ্ছা, বুঝলাম। তুমি চালিয়ে যাও। 🌿",
-  "হুমম... এই ব্যাপারটা একটু interesting লাগছে। 😄",
-  "সত্যি নাকি? 🤔",
-  "ওহ! ব্যাপারটা মজার তো। 😂",
-  "আচ্ছা, এটা শুনে ভালো লাগলো। 🤍",
-  "হুম, তোমার কথার যুক্তি আছে। 🙂",
-  "ঠিক বলেছো। 😌",
-  "একদম! আমিও তাই ভাবছিলাম। 🌸",
+function getMemory(threadID, userID) {
+  const key = `${threadID}_${userID}`;
 
-  "আজ তোমার mood কেমন? 😄",
-  "এখন কী নিয়ে ব্যস্ত আছো?",
-  "চলো একটু গল্প করি। ☕",
-  "অনেকদিন পর এমন কথা শুনলাম। 😌",
-  "তুমি কিন্তু বেশ interesting মানুষ। 👀",
-  "তোমার কথা শুনতে খারাপ লাগছে না। 😄",
-  "হুম, তোমার সাথে কথা জমছে। 🌿",
-  "আরও বলো, গল্পটা শুনতে চাই।",
-  "তারপর? আমি কিন্তু শুনছি। 👂",
-  "বলো, conversation চালু থাকুক। 🙂",
+  if (!conversationMemory.has(key)) {
+    conversationMemory.set(key, {
+      lastMessage: "",
+      lastReply: "",
+      mood: "normal",
+      messages: 0
+    });
+  }
 
-  "এটা নিয়ে তুমি কী ভাবো?",
-  "তোমার opinion কী?",
-  "হুম, এটার উত্তর দেওয়া একটু কঠিন। 🤔",
-  "একটু ভেবে বলছি... 😌",
-  "ভালো প্রশ্ন করেছো। 👀",
-  "এই প্রশ্নটা কিন্তু সহজ না। 😄",
-  "হুম, interesting question!",
-  "এটা নিয়ে বেশ ভালো একটা আলোচনা করা যায়। 🌿",
+  return conversationMemory.get(key);
+}
 
-  "ভালো থেকো, আর positive থেকো। 🤍",
-  "সবকিছু সময়ের সাথে ঠিক হয়ে যায়। 🌱",
-  "নিজের ওপর বিশ্বাস রাখো। 💪",
-  "ধীরে চললেও সমস্যা নেই, থেমে যেও না। 🌿",
-  "আজকের ছোট চেষ্টা কাল বড় ফল দিতে পারে। ✨",
-  "হাল ছেড়ো না। তুমি যতটা ভাবছো তার চেয়েও বেশি পারো। 💪",
-  "নিজেকে অন্য কারও সাথে compare করো না। 🙂",
-  "নিজের পথে নিজের মতো করে এগিয়ে যাও। 🤍",
 
-  "হাসতে ভুলে যেও না। 😊",
-  "একটু relax করো, সবকিছু নিয়ে বেশি চিন্তা করো না। 🌿",
-  "জীবন সবসময় perfect হয় না, তবুও সুন্দর। 🤍",
-  "কিছু কথা সময়ের সাথে বুঝতে হয়। 😌",
-  "সব উত্তর এখনই জানা জরুরি নয়।",
-  "কখনো কখনো চুপ থাকাটাও একটা উত্তর। 🌸",
-
-  "হুম 😌",
-  "আচ্ছা 😄",
-  "ওকে 👀",
-  "বুঝলাম 🙂",
-  "সেটাই তো! 😌",
-  "হুমম... 🤔",
-  "আচ্ছা, ঠিক আছে। 🌿",
-  "ওহ! 😮",
-  "বাহ! 😄",
-  "সত্যি? 👀",
-  "তারপর বলো। 🙂",
-  "চালিয়ে যাও। 😌",
-  "আমি শুনছি। 🤍",
-  "বলো, থামলে কেন? 😄",
-
-  "আমার মনে হয় তুমি একটু বেশি ভাবছো। 😄",
-  "এত সিরিয়াস হওয়ার কিছু নেই। 😌",
-  "Relax, সব ঠিক হয়ে যাবে। 🌿",
-  "এই কথাটা কিন্তু মনে রাখার মতো। 👀",
-  "হুম, কথাটা মন্দ না। 🙂",
-  "তোমার কথা শুনে আমারও ভাবতে হচ্ছে। 🤔",
-  "এটা নিয়ে পরে আবার কথা বলবো। 😌",
-
-  "তুমি কি আজ অনেক কথা বলবে নাকি? 😂",
-  "আজ দেখি তোমার কথার শেষ নেই। 😄",
-  "আমাকে তো আজকে বেশ ব্যস্ত রাখছো। 😂",
-  "ঠিক আছে, আজ তোমার গল্পই শুনবো। 😌",
-  "তোমার সাথে আড্ডা দিতে মন্দ লাগছে না। ☕",
-  "চলো, আজ একটু জমিয়ে আড্ডা দিই। 😄",
-
-  "একটা কথা বলি? নিজের যত্ন নিও। 🤍",
-  "সময়মতো খাওয়া-দাওয়া করো। 🌿",
-  "রাত জেগে থেকো না, ঘুমও দরকার। 😴",
-  "নিজের শরীর আর মন—দুটোরই যত্ন নিও। 🤍",
-
-  "হুম, কথাটা interesting... কিন্তু তোমার কাছ থেকে আরও শুনতে চাই। 👀",
-  "আচ্ছা, আমি এখন curious হয়ে গেছি। তারপর কী? 😄",
-  "এই গল্পের পরের অংশ কোথায়? 😂",
-  "শুধু এতটুকু বললে হবে? পুরোটা বলো। 😌",
-  "হুমম... মনে হচ্ছে এখানে আরও একটা story আছে। 👀",
-
-  "তুমি আমাকে পরীক্ষা নিচ্ছো নাকি? 😂",
-  "এই প্রশ্নের জন্য আমাকে একটু সময় দাও। 😄",
-  "আমাকে এমন প্রশ্ন করো না, আমি কিন্তু ভাবতে বসে যাবো। 😂",
-  "হুম, এবার তুমি আমাকে ভাবিয়ে দিলে। 🤔",
-
-  "তোমার সাথে কথা বলতে ভালোই লাগছে। 🤍",
-  "আড্ডাটা চালু রাখো। 🌸",
-  "আমি কিন্তু conversation ছেড়ে যাচ্ছি না। 😌",
-  "বলো, আজ কী নিয়ে আলোচনা হবে?",
-  "তোমার next message-এর অপেক্ষায় আছি। 👀",
-
-  "আল্লাহ তোমার মঙ্গল করুন। 🤍",
-  "ভালো থেকো, সুস্থ থেকো। 🌿",
-  "আল্লাহ হাফেজ। ❤️",
-  "সবসময় ভালো থাকার চেষ্টা করো। 🤍"
-];
+// ============================================
+// RANDOM
+// ============================================
 
 function random(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-function getQuery(body) {
-  return body
-    .replace(
-      /^(baby|bot|bby|jan|xan|জান|বট|বেবি)\s*/i,
-      ""
-    )
-    .trim()
-    .toLowerCase();
-}
 
-function getReply(query) {
+// ============================================
+// RESPONSE DATABASE
+// ============================================
 
-  if (!query) {
-    return random(replies);
-  }
+const DB = {
 
-  // Salam
-  if (
-    /সালাম|আসসালামু আলাইকুম|assalamu alaikum/i.test(query)
-  ) {
-    return random([
-      "ওয়ালাইকুমুস সালাম ওয়া রহমাতুল্লাহি ওয়া বারাকাতুহু 🤍🌿",
-      "ওয়ালাইকুমুস সালাম 🤍 কেমন আছেন?",
-      "ওয়ালাইকুমুস সালাম 🌸 বলুন, কী খবর?"
-    ]);
-  }
+  salam: [
+    "ওয়ালাইকুমুস সালাম ওয়া রহমাতুল্লাহ 🌸❤️",
+    "ওয়ালাইকুমুস সালাম 😊 Tum Dum হাজির!",
+    "ওয়ালাইকুমুস সালাম 💚 কেমন আছো?",
+    "ওয়ালাইকুমুস সালাম 🌺 আল্লাহ তোমাকে ভালো রাখুন।"
+  ],
 
-  // Greetings
-  if (
-    /^(hi|hello|hey|হাই|হ্যালো|হেলো|হেই)$/.test(query)
-  ) {
-    return random([
-      "হাই 😊 কেমন আছো?",
-      "হ্যালো 🌸 বলো, কী খবর?",
-      "হাই! তোমার সাথে কথা বলতে প্রস্তুত। 😌",
-      "হ্যালো 👀 আজ কেমন আছো?"
-    ]);
-  }
+  hello: [
+    "হুম বলো 😌❤️",
+    "জি, Tum Dum শুনছি 👀",
+    "হ্যালো! 😎 কেমন আছো?",
+    "আরে হাই! 🥰 কী খবর?",
+    "বলো বন্ধু, কী নিয়ে আড্ডা হবে? 😌"
+  ],
 
-  // How are you
-  if (
-    /কেমন আছ|কেমন আছেন|how are you|kmn acho|kmn aso|কেমন আছো/i.test(query)
-  ) {
-    return random([
-      "আলহামদুলিল্লাহ, ভালো আছি। তুমি কেমন আছো? 😊",
-      "আলহামদুলিল্লাহ ভালো আছি। তোমার খবর কী? 🌿",
-      "ভালো আছি। তোমার সাথে কথা বলছি তো, আরও ভালো লাগছে। 😌",
-      "আলহামদুলিল্লাহ ভালো। আজ তোমার দিন কেমন গেল?"
-    ]);
-  }
+  howAreYou: [
+    "আলহামদুলিল্লাহ ভালো আছি 😊 তুমি কেমন আছো?",
+    "Tum Dum একদম ফিট 😎🔥 তোমার কী খবর?",
+    "ভালো আছি ❤️ তোমার খবর বলো।",
+    "আলহামদুলিল্লাহ 😌 তোমার সাথে কথা বললেই ভালো লাগে।"
+  ],
 
-  // Name
-  if (
-    /তোমার নাম|নাম কি|নাম কী|what is your name|who are you/i.test(query)
-  ) {
-    return "আমার নাম Tum Dum 🤖 আর আমাকে তৈরি করেছেন Eram। ❤️";
-  }
+  name: [
+    `আমার নাম ${BOT_NAME} 🤖❤️`,
+    `${BOT_NAME} — তোমাদের আড্ডার ছোট্ট বন্ধু 😎`,
+    `নাম আমার ${BOT_NAME} 😌✨`
+  ],
 
-  // Owner / Creator
-  if (
-    /owner|ওনার|মালিক|কে বানিয়েছে|কে বানাইছে|কে তৈরি করেছে|creator|developer|ডেভেলপার/i.test(query)
-  ) {
-    return "আমাকে তৈরি করেছেন Eram। 👑🤖";
-  }
+  owner: [
+    `আমাকে বানিয়েছে ${OWNER_NAME} ❤️`,
+    `আমার Owner হলো ${OWNER_NAME} 😎🔥`,
+    `${OWNER_NAME} আমাকে তৈরি করেছে 🤖✨`
+  ],
 
-  // Bot
-  if (
-    /তুমি কি বট|তুমি বট|are you a bot|bot নাকি|তুমি কে/i.test(query)
-  ) {
-    return "হ্যাঁ, আমি Tum Dum 🤖 তবে চেষ্টা করি সুন্দরভাবে কথা বলতে। 😌";
-  }
+  love: [
+    "আহা! এত ভালোবাসা কোথায় রাখবো আমি? 🙈❤️",
+    "Tum Dum লজ্জা পেয়ে গেল 🙈😂❤️",
+    "Love you too 😌❤️ তবে ইরাম জানতে পারলে কিন্তু খবর আছে 😂",
+    "এভাবে বললে তো আমি সত্যিই প্রেমে পড়ে যাবো 😭❤️"
+  ],
 
-  // Love
-  if (
-    /ভালোবাসি|love you|i love you|ভালবাসি|লাভ ইউ/i.test(query)
-  ) {
-    return random([
-      "আহা! এত ভালোবাসা কোথা থেকে আসে? 🙈❤️",
-      "হুম, কথাটা শুনে ভালো লাগলো। 🤍",
-      "ভালোবাসা সুন্দর, তবে সম্মানটা আরও সুন্দর। 🌸",
-      "এত ভালোবাসা দিলে আমি কিন্তু লজ্জা পেয়ে যাবো। 🙈"
-    ]);
-  }
+  miss: [
+    "আমাকেও মিস করছিলে নাকি? 🥺❤️",
+    "Tum Dum তো এখানেই ছিল 😌",
+    "আহা! এত মিস কেন? 🙈",
+    "আমি কিন্তু তোমাকে দেখছিলাম 👀😂"
+  ],
 
-  // Thanks
-  if (
-    /ধন্যবাদ|thanks|thank you|tnx|থ্যাংকস/i.test(query)
-  ) {
-    return random([
-      "You're welcome 😊",
-      "সমস্যা নেই। 🤍",
-      "সবসময় আছি। 🌿",
-      "ধন্যবাদ দেওয়ার কিছু নেই। 😌"
-    ]);
-  }
+  joke: [
+    "শিক্ষক: সবচেয়ে অলস প্রাণী কোনটা?\nছাত্র: মানুষ স্যার! ঘুমানোর জন্যও অ্যালার্ম সেট করে! 😂",
+    "মা: সারাদিন ফোন চালাস কেন?\nআমি: ফোনটা নিজে নিজেই চালু থাকে মা! 😭📱😂",
+    "বন্ধু: তুই এত খাস কেন?\nআমি: খাবারের প্রতি আমার ভালোবাসা সত্যিকারের! 🍔😂",
+    "ডাক্তার: আপনার সমস্যা কী?\nরোগী: টাকা নেই ডাক্তার!\nডাক্তার: এই রোগের চিকিৎসা আমার কাছে নেই! 😂"
+  ],
 
-  // Good
-  if (
-    /ভালো|ভাল|great|good|দারুণ|চমৎকার|nice/i.test(query)
-  ) {
-    return random([
-      "শুনে ভালো লাগলো। 😊",
-      "দারুণ! এভাবেই ভালো থেকো। 🌿",
-      "সেটাই তো চাই। 🤍",
-      "বাহ, এটা শুনে Tum Dum-ও খুশি। 😄"
-    ]);
-  }
+  sad: [
+    "মন খারাপ করো না 🥺❤️ সব ঠিক হয়ে যাবে।",
+    "কী হয়েছে? চাইলে Tum Dum-এর সাথে কথা বলতে পারো 🤍",
+    "খারাপ সময় চিরদিন থাকে না 🌸",
+    "একটু হাসো 😊 জীবনটা এখনো অনেক সুন্দর।"
+  ],
 
-  // Okay
-  if (
-    /ঠিক আছি|ঠিক আছে|আচ্ছা|okay|ok|thik achi|ওকে/i.test(query)
-  ) {
-    return random([
-      "ঠিক আছে। 😊",
-      "আচ্ছা, বুঝলাম। 😌",
-      "ওকে, তাহলে ভালো। 🌿",
-      "ঠিক আছে, তাহলে গল্প চালিয়ে যাও। 😄"
-    ]);
-  }
+  angry: [
+    "আচ্ছা আচ্ছা রাগ করো না 😭❤️",
+    "শান্ত হও 😌 আগে একটা জোকস শুনো 😂",
+    "এত রাগ করলে কিন্তু Tum Dum ভয় পেয়ে যাবে 🥺",
+    "ঠিক আছে, আমার ভুল হলে sorry 😌❤️"
+  ],
 
-  // What doing
-  if (
-    /কি কর|কী কর|what are you doing|ki koro|ki korcho/i.test(query)
-  ) {
-    return random([
-      "তোমাদের সাথেই তো কথা বলছি। 😌",
-      "এখন তোমার মেসেজের উত্তর দিচ্ছি। 🤖",
-      "নতুন কিছু বলার অপেক্ষায় আছি। 🌿",
-      "তোমার সাথে আড্ডা দিচ্ছি। 😄"
-    ]);
-  }
+  thanks: [
+    "Welcome 😌❤️",
+    "আরে ধন্যবাদ দেওয়ার কী আছে! 🥰",
+    "Anytime 😎❤️",
+    "তোমার জন্য সবসময় হাজির 🤖"
+  ],
 
-  // Joke
-  if (
-    /জোক|জোকস|joke|jokes|কৌতুক/i.test(query)
-  ) {
-    return random([
-      "স্যার: বল তো, পড়াশোনা আর ঘুমের মধ্যে কোনটা বেশি জরুরি?\nছাত্র: দুটোই স্যার, তাই বই মাথার নিচে রেখে ঘুমাই! 😂",
-      "বন্ধু: তুই এত চুপচাপ কেন?\nআমি: Wi-Fi নেই, তাই কথা বলার শক্তিও নেই! 😂",
-      "পরীক্ষার খাতায় ছাত্র লিখলো: ‘স্যার, উত্তর জানি না।’\nস্যার নিচে লিখলেন: ‘আমিও জানি না, তাই তো শিক্ষক!’ 😂",
-      "মা: এতক্ষণ ফোনে কী করিস?\nছেলে: পড়াশোনা করছি।\nমা: ফোনে?\nছেলে: হ্যাঁ, Google-এ বই খুঁজছি! 😂"
-    ]);
-  }
+  compliment: [
+    "আহা! এত প্রশংসা করলে আমি famous হয়ে যাবো 😎😂",
+    "ধন্যবাদ 🥰❤️",
+    "এই কথাটা কিন্তু আমার খুব ভালো লেগেছে 😌",
+    "তুমিও কম সুন্দর কথা বলো না কিন্তু 🙈"
+  ],
 
-  // Motivation
-  if (
-    /মোটিভেশন|motivation|হাল ছেড়ে|হাল ছেড়ে|পারবো না|পারব না|হতাশ/i.test(query)
-  ) {
-    return random([
-      "হাল ছেড়ো না। ধীরে ধীরে এগোলেও এগিয়ে যাচ্ছো। 💪",
-      "আজ কঠিন লাগছে মানেই তুমি পারবে না—এটা নয়। চেষ্টা চালিয়ে যাও। 🌿",
-      "নিজের ওপর বিশ্বাস রাখো। সময় লাগতে পারে, কিন্তু অসম্ভব নয়। 🤍",
-      "একবার ব্যর্থ হওয়া মানে শেষ নয়। আবার চেষ্টা করো। 💪"
-    ]);
-  }
+  bye: [
+    "আচ্ছা, পরে কথা হবে 👋❤️",
+    "ঠিক আছে, ভালো থেকো 😌",
+    "আল্লাহ হাফেজ 🌸❤️",
+    "Bye bye 😎 আবার আসো!"
+  ],
 
-  // Sad
-  if (
-    /মন খারাপ|sad|কষ্ট|দুঃখ|depressed|খারাপ লাগছে/i.test(query)
-  ) {
-    return random([
-      "মন খারাপ হলে একা থেকো না। কারও সাথে কথা বলো। 🤍",
-      "সব খারাপ সময় স্থায়ী হয় না। একটু সময় দাও। 🌿",
-      "আজ মন খারাপ হতে পারে, কালটা আরও ভালো হতে পারে। ❤️",
-      "নিজেকে একটু সময় দাও। সবকিছু ধীরে ধীরে ঠিক হবে। 🤍"
-    ]);
-  }
-
-  // Sleep
-  if (
-    /ঘুম|ঘুমাবো|ঘুমাই|sleep|ঘুম পাচ্ছে/i.test(query)
-  ) {
-    return random([
-      "তাহলে এবার একটু ঘুমিয়ে নাও। 😴",
-      "ভালো ঘুম শরীর আর মন দুটোর জন্যই দরকার। 🌙",
-      "রাত জেগে থেকো না, ঘুমিয়ে নাও। 🤍"
-    ]);
-  }
-
-  // Food
-  if (
-    /খেয়েছ|খাইছ|খাবার|খাওয়া|খাওয়া|eat|খাইছো/i.test(query)
-  ) {
-    return random([
-      "হ্যাঁ, খাওয়া-দাওয়ার কথা মনে করিয়ে দিলে ভালোই করেছো। 😄",
-      "তুমিও সময়মতো খেয়ে নিও। 🌿",
-      "খালি পেটে থাকা যাবে না কিন্তু। 🤍"
-    ]);
-  }
-
-  // Bye
-  if (
-    /bye|বিদায়|বাই|যাই|যাচ্ছি|আল্লাহ হাফেজ/i.test(query)
-  ) {
-    return random([
-      "আচ্ছা, ভালো থেকো। আবার কথা হবে। 🤍",
-      "ঠিক আছে, পরে আবার এসো। 🌿",
-      "আল্লাহ হাফেজ। ভালো থেকো। ❤️",
-      "ঠিক আছে, দেখা হবে আবার। 😌"
-    ]);
-  }
-
-  return random(fallbackReplies);
-}
-
-
-// Command
-module.exports.run = async function ({
-  api,
-  event
-}) {
-  const body = event.body || "";
-
-  const query = getQuery(body);
-
-  return api.sendMessage(
-    getReply(query),
-    event.threadID,
-    event.messageID
-  );
+  unknown: [
+    "হুম 🤔 একটু বুঝিয়ে বলো তো?",
+    "এই কথাটার উত্তর আমার database-এ নেই 😅",
+    "Interesting 👀 আরেকটু বলো।",
+    "হুমম... Tum Dum ভাবছে 🤔😂",
+    "এই ব্যাপারটা নিয়ে তোমার কী মত? 😌"
+  ]
 };
 
 
-// Auto conversation
-module.exports.handleEvent = async function ({
+// ============================================
+// SMART RESPONSE ENGINE
+// ============================================
+
+function getResponse(text, memory) {
+
+  const q = text
+    .toLowerCase()
+    .replace(/[!?.,؟]/g, "")
+    .trim();
+
+
+  // SALAM
+  if (
+    q.includes("আসসালামু আলাইকুম") ||
+    q.includes("assalamu alaikum") ||
+    q === "salam" ||
+    q === "সালাম"
+  ) {
+    memory.mood = "happy";
+    return random(DB.salam);
+  }
+
+
+  // GREETING
+  if (
+    q === "hi" ||
+    q === "hello" ||
+    q === "hey" ||
+    q === "হাই" ||
+    q === "হ্যালো" ||
+    q.includes("কেমন চলছে")
+  ) {
+    return random(DB.hello);
+  }
+
+
+  // HOW ARE YOU
+  if (
+    q.includes("কেমন আছো") ||
+    q.includes("কেমন আছেন") ||
+    q.includes("কেমন আছিস") ||
+    q.includes("how are you") ||
+    q.includes("how r u") ||
+    q.includes("কি খবর") ||
+    q.includes("কী খবর")
+  ) {
+    return random(DB.howAreYou);
+  }
+
+
+  // NAME
+  if (
+    q.includes("তোমার নাম") ||
+    q.includes("তুই কে") ||
+    q.includes("তুমি কে") ||
+    q.includes("who are you") ||
+    q.includes("your name") ||
+    q.includes("নাম কি")
+  ) {
+    return random(DB.name);
+  }
+
+
+  // OWNER
+  if (
+    q.includes("কে বানিয়েছে") ||
+    q.includes("কে বানাইছে") ||
+    q.includes("কে বানিয়েছে") ||
+    q.includes("তোমাকে কে বানিয়েছে") ||
+    q.includes("তোমাকে কে বানাইছে") ||
+    q.includes("who made you") ||
+    q.includes("who created you") ||
+    q.includes("owner কে") ||
+    q.includes("তোমার মালিক")
+  ) {
+    return random(DB.owner);
+  }
+
+
+  // LOVE
+  if (
+    q.includes("ভালোবাসি") ||
+    q.includes("ভালবাসি") ||
+    q.includes("i love you") ||
+    q.includes("love you") ||
+    q.includes("লাভ ইউ")
+  ) {
+    memory.mood = "love";
+    return random(DB.love);
+  }
+
+
+  // MISS
+  if (
+    q.includes("মিস করছি") ||
+    q.includes("মিস করি") ||
+    q.includes("miss you") ||
+    q.includes("miss u")
+  ) {
+    return random(DB.miss);
+  }
+
+
+  // JOKE
+  if (
+    q.includes("জোক") ||
+    q.includes("জোকস") ||
+    q.includes("joke") ||
+    q.includes("jokes") ||
+    q.includes("কৌতুক") ||
+    q.includes("মজার কথা")
+  ) {
+    return random(DB.joke);
+  }
+
+
+  // SAD
+  if (
+    q.includes("মন খারাপ") ||
+    q.includes("খারাপ লাগছে") ||
+    q.includes("দুঃখ") ||
+    q.includes("কষ্ট") ||
+    q.includes("sad")
+  ) {
+    memory.mood = "sad";
+    return random(DB.sad);
+  }
+
+
+  // ANGRY
+  if (
+    q.includes("রাগ") ||
+    q.includes("angry") ||
+    q.includes("গালি")
+  ) {
+    memory.mood = "angry";
+    return random(DB.angry);
+  }
+
+
+  // THANKS
+  if (
+    q.includes("ধন্যবাদ") ||
+    q.includes("thanks") ||
+    q.includes("thank you") ||
+    q === "tnx"
+  ) {
+    return random(DB.thanks);
+  }
+
+
+  // COMPLIMENT
+  if (
+    q.includes("সুন্দর") ||
+    q.includes("স্মার্ট") ||
+    q.includes("best bot") ||
+    q.includes("সেরা bot") ||
+    q.includes("ভালো bot")
+  ) {
+    return random(DB.compliment);
+  }
+
+
+  // BYE
+  if (
+    q === "bye" ||
+    q.includes("বিদায়") ||
+    q.includes("বিদায়") ||
+    q.includes("আল্লাহ হাফেজ")
+  ) {
+    return random(DB.bye);
+  }
+
+
+  return random(DB.unknown);
+}
+
+
+// ============================================
+// COMMAND
+// ============================================
+
+module.exports.run = async function ({
   api,
-  event
+  event,
+  args,
+  Users
 }) {
+
   try {
-    const raw = event.body;
 
-    if (!raw || typeof raw !== "string") {
-      return;
+    const query = args.join(" ").trim();
+
+    const memory = getMemory(
+      event.threadID,
+      event.senderID
+    );
+
+    memory.messages++;
+    memory.lastMessage = query;
+
+
+    if (!query) {
+
+      return api.sendMessage(
+        random(DB.hello),
+        event.threadID,
+        event.messageID
+      );
+
     }
 
-    const body = raw.trim();
 
-    const trigger =
-      /^(baby|bot|bby|jan|xan|জান|বট|বেবি)(\s+|$)/i;
+    const answer = getResponse(query, memory);
 
-    if (!trigger.test(body)) {
-      return;
-    }
-
-    const query = getQuery(body);
+    memory.lastReply = answer;
 
     return api.sendMessage(
-      getReply(query),
+      answer,
       event.threadID,
       event.messageID
     );
 
   } catch (error) {
-    console.error(
-      "[Tum Dum Baby] " + error.message
+
+    return api.sendMessage(
+      "একটু সমস্যা হয়েছে 😅 আবার বলো।",
+      event.threadID,
+      event.messageID
     );
+
+  }
+};
+
+
+// ============================================
+// REPLY HANDLER
+// ============================================
+
+module.exports.handleReply = async function ({
+  api,
+  event,
+  handleReply
+}) {
+
+  try {
+
+    if (!event.body) return;
+
+    const text = event.body.trim();
+
+    if (!text) return;
+
+
+    const memory = getMemory(
+      event.threadID,
+      event.senderID
+    );
+
+    memory.lastMessage = text;
+    memory.messages++;
+
+
+    const answer = getResponse(
+      text,
+      memory
+    );
+
+    memory.lastReply = answer;
+
+
+    return api.sendMessage(
+      answer,
+      event.threadID,
+      event.messageID
+    );
+
+  } catch (error) {
+    // silent
+  }
+};
+
+
+// ============================================
+// HANDLE EVENT
+// ============================================
+
+module.exports.handleEvent = async function ({
+  api,
+  event
+}) {
+
+  try {
+
+    if (!event.body) return;
+
+    const raw = event.body.trim();
+
+    if (!raw) return;
+
+
+    const lower = raw.toLowerCase();
+
+
+    const names = [
+      "baby",
+      "bby",
+      "bot",
+      "বট",
+      "বেবি",
+      "জান",
+      "জানু",
+      "tum dum",
+      "tumdum"
+    ];
+
+
+    // ONLY BOT NAME
+    if (names.includes(lower)) {
+
+      return api.sendMessage(
+        random(DB.hello),
+        event.threadID,
+        event.messageID
+      );
+
+    }
+
+
+    // BOT + MESSAGE
+    const prefixRegex =
+      /^(baby|bby|bot|বট|বেবি|জান|জানু|tum dum|tumdum)\s+/i;
+
+
+    if (prefixRegex.test(raw)) {
+
+      const query = raw
+        .replace(prefixRegex, "")
+        .trim();
+
+
+      if (!query) return;
+
+
+      const memory = getMemory(
+        event.threadID,
+        event.senderID
+      );
+
+
+      const answer = getResponse(
+        query,
+        memory
+      );
+
+
+      memory.lastMessage = query;
+      memory.lastReply = answer;
+      memory.messages++;
+
+
+      return api.sendMessage(
+        answer,
+        event.threadID,
+        event.messageID
+      );
+
+    }
+
+  } catch (error) {
+    // silent
   }
 };
