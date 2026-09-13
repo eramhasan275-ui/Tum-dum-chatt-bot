@@ -1,6 +1,6 @@
 /**
  * =========================================================
- * TUM DUM - SMART CONTEXT AUTO REPLY v5
+ * TUM DUM - SMART CONTEXT AUTO REPLY v5.1
  * Owner: ইরাম
  * No External API / No AI
  * =========================================================
@@ -11,14 +11,15 @@ const OWNER_NAME = "ইরাম";
 
 module.exports.config = {
   name: "autoreply",
-  version: "5.0.0",
+  version: "5.1.0",
   hasPermssion: 0,
   credits: "ইরাম",
   description: "Smart context based automatic group replies",
   commandCategory: "Chat",
   usages: "",
   cooldowns: 3,
-  prefix: false
+  prefix: false,
+  eventType: ["message"]
 };
 
 
@@ -31,6 +32,7 @@ const cooldowns = new Map();
 const threadCooldowns = new Map();
 
 function random(arr) {
+  if (!arr || !arr.length) return "";
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -58,9 +60,9 @@ function getUser(threadID, senderID) {
 
 function normalize(text) {
 
-  return text
+  return String(text || "")
     .toLowerCase()
-    .replace(/[!?.,؟,،:;'"`~@#$%^&*()[\]{}<>|\\/+=_-]/g, " ")
+    .replace(/[!?.,؟،:;'"`~@#$%^&*()[\]{}<>|\\/+=_-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -70,32 +72,31 @@ function normalize(text) {
 // COOLDOWN
 // =========================================================
 
-function canReply(threadID, senderID, category, confidence) {
+function canReply(threadID, senderID, confidence) {
 
   const now = Date.now();
 
   const userKey = `${threadID}_${senderID}`;
-  const threadKey = threadID;
 
   const lastUser = cooldowns.get(userKey) || 0;
-  const lastThread = threadCooldowns.get(threadKey) || 0;
+  const lastThread = threadCooldowns.get(threadID) || 0;
 
-  // Same user cannot trigger too frequently
+  // Same user: 7 seconds
   if (now - lastUser < 7000) {
     return false;
   }
 
-  // Prevent group spam
+  // Group-wide protection: 3.5 seconds
   if (now - lastThread < 3500) {
 
-    // Strong/direct messages can still pass
-    if (confidence < 3) {
+    // Only strong/direct messages can bypass
+    if (confidence < 5) {
       return false;
     }
   }
 
   cooldowns.set(userKey, now);
-  threadCooldowns.set(threadKey, now);
+  threadCooldowns.set(threadID, now);
 
   return true;
 }
@@ -299,252 +300,108 @@ const R = {
 const TOPICS = {
 
   weather: [
-    "বৃষ্টি",
-    "বৃষ্টির",
-    "বৃষ্টিতে",
-    "বৃষ্টি হচ্ছে",
-    "rain",
-    "raining",
-    "weather",
-    "আবহাওয়া",
-    "আবহাওয়া",
-    "গরম",
-    "ঠান্ডা",
-    "রোদ",
-    "ঝড়",
-    "ঝড়",
-    "মেঘ"
+    "বৃষ্টি", "বৃষ্টির", "বৃষ্টিতে", "বৃষ্টি হচ্ছে",
+    "rain", "raining", "weather",
+    "আবহাওয়া", "আবহাওয়া", "গরম", "ঠান্ডা",
+    "রোদ", "ঝড়", "ঝড়", "মেঘ"
   ],
 
   study: [
-    "পড়াশোনা",
-    "পড়াশোনা",
-    "পড়তে",
-    "পড়তে",
-    "পড়া",
-    "পড়া",
-    "study",
-    "studying",
-    "বই",
-    "খাতা",
-    "হোমওয়ার্ক",
-    "homework",
-    "assignment",
-    "class",
-    "ক্লাস",
-    "স্যার",
-    "ম্যাডাম"
+    "পড়াশোনা", "পড়াশোনা", "পড়তে", "পড়তে",
+    "পড়া", "পড়া", "study", "studying",
+    "বই", "খাতা", "হোমওয়ার্ক", "homework",
+    "assignment", "class", "ক্লাস",
+    "স্যার", "ম্যাডাম"
   ],
 
   exam: [
-    "পরীক্ষা",
-    "পরিক্ষা",
-    "exam",
-    "examination",
-    "hsc",
-    "ssc",
-    "result",
-    "রেজাল্ট",
-    "পরীক্ষায়",
-    "পরীক্ষায়",
-    "ফেল",
-    "পাস",
-    "marks",
-    "নম্বর"
+    "পরীক্ষা", "পরিক্ষা", "exam", "examination",
+    "hsc", "ssc", "result", "রেজাল্ট",
+    "পরীক্ষায়", "পরীক্ষায়", "ফেল", "পাস",
+    "marks", "নম্বর"
   ],
 
   food: [
-    "খাবার",
-    "খেতে",
-    "খাবো",
-    "খাই",
-    "খিদা",
-    "ক্ষুধা",
-    "বিরিয়ানি",
-    "বিরিয়ানি",
-    "পিজ্জা",
-    "pizza",
-    "burger",
-    "বার্গার",
-    "ফুচকা",
-    "চা",
-    "কফি",
-    "coffee",
-    "rice",
-    "ভাত",
-    "মাংস",
-    "চিকেন"
+    "খাবার", "খেতে", "খাবো", "খাই",
+    "খিদা", "ক্ষুধা", "বিরিয়ানি", "বিরিয়ানি",
+    "পিজ্জা", "pizza", "burger", "বার্গার",
+    "ফুচকা", "চা", "কফি", "coffee",
+    "rice", "ভাত", "মাংস", "চিকেন"
   ],
 
   sleep: [
-    "ঘুম",
-    "ঘুমাবো",
-    "ঘুমাতে",
-    "ঘুমাই",
-    "ঘুম পাচ্ছে",
-    "ঘুমাইতে",
-    "sleep",
-    "sleeping",
-    "tired",
-    "ক্লান্ত",
-    "রাত জাগা",
-    "জেগে"
+    "ঘুম", "ঘুমাবো", "ঘুমাতে", "ঘুমাই",
+    "ঘুম পাচ্ছে", "ঘুমাইতে", "sleep",
+    "sleeping", "tired", "ক্লান্ত",
+    "রাত জাগা", "জেগে"
   ],
 
   work: [
-    "কাজ",
-    "চাকরি",
-    "অফিস",
-    "job",
-    "work",
-    "working",
-    "busy",
-    "ব্যস্ত",
-    "কাজ করছি",
-    "ডিউটি",
-    "duty"
+    "কাজ", "চাকরি", "অফিস", "job",
+    "work", "working", "busy", "ব্যস্ত",
+    "কাজ করছি", "ডিউটি", "duty"
   ],
 
   money: [
-    "টাকা",
-    "পয়সা",
-    "পয়সা",
-    "money",
-    "cash",
-    "বেতন",
-    "salary",
-    "দাম",
-    "price",
-    "খরচ",
-    "ঋণ",
-    "ধার"
+    "টাকা", "পয়সা", "পয়সা", "money",
+    "cash", "বেতন", "salary", "দাম",
+    "price", "খরচ", "ঋণ", "ধার"
   ],
 
   gaming: [
-    "গেম",
-    "গেমিং",
-    "game",
-    "gaming",
-    "free fire",
-    "ফ্রি ফায়ার",
-    "ফ্রি ফায়ার",
-    "pubg",
-    "minecraft",
-    "rank",
-    "র‍্যাঙ্ক",
-    "match",
-    "ম্যাচ",
-    "লবি",
-    "kill",
-    "headshot"
+    "গেম", "গেমিং", "game", "gaming",
+    "free fire", "ফ্রি ফায়ার", "ফ্রি ফায়ার",
+    "pubg", "minecraft", "rank", "র‍্যাঙ্ক",
+    "match", "ম্যাচ", "লবি", "kill", "headshot"
   ],
 
   football: [
-    "ফুটবল",
-    "football",
-    "soccer",
-    "goal",
-    "গোল",
-    "ম্যাচ",
-    "player",
-    "প্লেয়ার",
-    "প্লেয়ার",
-    "team",
-    "টিম",
-    "argentina",
-    "আর্জেন্টিনা",
-    "messi",
-    "মেসি",
-    "ronaldo",
-    "রোনালদো"
+    "ফুটবল", "football", "soccer", "goal",
+    "গোল", "match", "player", "প্লেয়ার",
+    "প্লেয়ার", "team", "টিম", "argentina",
+    "আর্জেন্টিনা", "messi", "মেসি",
+    "ronaldo", "রোনালদো"
   ],
 
   group: [
-    "গ্রুপ",
-    "group",
-    "চুপচাপ",
-    "নীরব",
-    "silent",
-    "কেউ কথা",
-    "কথা বলছে না",
-    "সবাই চুপ",
-    "কেউ নেই",
-    "inactive"
+    "গ্রুপ", "group", "চুপচাপ", "নীরব",
+    "silent", "কেউ কথা", "কথা বলছে না",
+    "সবাই চুপ", "কেউ নেই", "inactive"
   ],
 
   boredom: [
-    "বোর",
-    "boring",
-    "bored",
-    "একঘেয়ে",
-    "একঘেয়েমি",
-    "বিরক্ত",
-    "বিরক্ত লাগছে",
-    "মজা নেই",
-    "কিছু করার নেই",
-    "সময় যাচ্ছে না",
-    "time pass"
+    "বোর", "boring", "bored", "একঘেয়ে",
+    "একঘেয়েমি", "বিরক্ত", "বিরক্ত লাগছে",
+    "মজা নেই", "কিছু করার নেই",
+    "সময় যাচ্ছে না", "time pass"
   ],
 
   relationship: [
-    "প্রেম",
-    "ভালোবাসা",
-    "ভালবাসা",
-    "ভালোবাসি",
-    "ভালবাসি",
-    "প্রেমিকা",
-    "প্রেমিক",
-    "girlfriend",
-    "boyfriend",
-    "crush",
-    "love",
-    "miss you",
-    "মিস করি",
-    "মনে পড়ে",
-    "মনে পড়ে"
+    "প্রেম", "ভালোবাসা", "ভালবাসা",
+    "ভালোবাসি", "ভালবাসি", "প্রেমিকা",
+    "প্রেমিক", "girlfriend", "boyfriend",
+    "crush", "love", "miss you",
+    "মিস করি", "মনে পড়ে", "মনে পড়ে"
   ],
 
   compliment: [
-    "সুন্দর",
-    "সুন্দরী",
-    "ভালো",
-    "দারুণ",
-    "চমৎকার",
-    "অসাধারণ",
-    "smart",
-    "handsome",
-    "cute",
-    "nice",
-    "best",
-    "great",
-    "awesome"
+    "সুন্দর", "সুন্দরী", "ভালো", "দারুণ",
+    "চমৎকার", "অসাধারণ", "smart",
+    "handsome", "cute", "nice",
+    "best", "great", "awesome"
   ],
 
   angry: [
-    "রাগ",
-    "রাগছি",
-    "রাগ লাগছে",
-    "ক্ষিপ্ত",
-    "angry",
-    "mad",
-    "hate",
-    "ঘৃণা",
-    "সহ্য হচ্ছে না"
+    "রাগ", "রাগছি", "রাগ লাগছে",
+    "ক্ষিপ্ত", "angry", "mad", "hate",
+    "ঘৃণা", "সহ্য হচ্ছে না"
   ],
 
   sad: [
-    "মন খারাপ",
-    "কষ্ট",
-    "কষ্ট হচ্ছে",
-    "দুঃখ",
-    "দুঃখিত",
-    "কাঁদছি",
-    "কান্না",
-    "একাকী",
-    "একা লাগছে",
-    "sad",
-    "depressed",
-    "lonely"
+    "মন খারাপ", "কষ্ট", "কষ্ট হচ্ছে",
+    "দুঃখ", "দুঃখিত", "কাঁদছি",
+    "কান্না", "একাকী", "একা লাগছে",
+    "sad", "depressed", "lonely"
   ]
 
 };
@@ -556,6 +413,7 @@ const TOPICS = {
 
 function detectBasic(q) {
 
+  // SALAM
   if (
     q.includes("আসসালামু আলাইকুম") ||
     q.includes("assalamu alaikum") ||
@@ -569,6 +427,7 @@ function detectBasic(q) {
   }
 
 
+  // GREETING
   if (
     q === "hi" ||
     q === "hello" ||
@@ -583,6 +442,7 @@ function detectBasic(q) {
   }
 
 
+  // HOW ARE YOU
   if (
     q.includes("কেমন আছো") ||
     q.includes("কেমন আছেন") ||
@@ -597,8 +457,8 @@ function detectBasic(q) {
   }
 
 
+  // GOOD
   if (
-    q.includes("좋") ||
     q.includes("ভালো আছি") ||
     q.includes("ভাল আছি") ||
     q === "good" ||
@@ -612,6 +472,7 @@ function detectBasic(q) {
   }
 
 
+  // JOKE
   if (
     q.includes("জোক") ||
     q.includes("জোকস") ||
@@ -625,6 +486,7 @@ function detectBasic(q) {
   }
 
 
+  // THANKS
   if (
     q.includes("ধন্যবাদ") ||
     q.includes("thanks") ||
@@ -637,6 +499,7 @@ function detectBasic(q) {
   }
 
 
+  // LOVE
   if (
     q.includes("ভালোবাসি") ||
     q.includes("ভালবাসি") ||
@@ -651,6 +514,7 @@ function detectBasic(q) {
   }
 
 
+  // INSULT
   if (
     q.includes("বোকা") ||
     q.includes("পাগল") ||
@@ -664,19 +528,7 @@ function detectBasic(q) {
   }
 
 
-  if (
-    q.includes("tum dum") ||
-    q.includes("tumdum") ||
-    q.includes("বট") ||
-    q.includes("baby")
-  ) {
-    return {
-      category: "bot",
-      confidence: 5
-    };
-  }
-
-
+  // OWNER
   if (
     q.includes("কে বানিয়েছে") ||
     q.includes("কে বানাইছে") ||
@@ -688,6 +540,21 @@ function detectBasic(q) {
   ) {
     return {
       category: "owner",
+      confidence: 5
+    };
+  }
+
+
+  // BOT
+  if (
+    q.includes("tum dum") ||
+    q.includes("tumdum") ||
+    q === "বট" ||
+    q.startsWith("বট ") ||
+    q.includes("baby")
+  ) {
+    return {
+      category: "bot",
       confidence: 5
     };
   }
@@ -705,7 +572,7 @@ function detectTopic(text) {
 
   const q = normalize(text);
 
-  let results = [];
+  const results = [];
 
   for (const category of Object.keys(TOPICS)) {
 
@@ -719,51 +586,43 @@ function detectTopic(text) {
 
       if (q.includes(k)) {
 
-        // Long phrases are stronger matches
-        if (k.includes(" ")) {
-          score += 3;
-        } else {
-          score += 1;
-        }
+        score += k.includes(" ") ? 3 : 1;
+
       }
+
     }
 
     if (score > 0) {
-
       results.push({
         category,
         score
       });
-
     }
+
   }
 
   results.sort((a, b) => b.score - a.score);
 
-  if (!results.length) {
-    return null;
-  }
-
-  return results[0];
+  return results.length ? results[0] : null;
 }
 
 
 // =========================================================
-// UNKNOWN MESSAGE HANDLER
+// UNKNOWN REPLY
 // =========================================================
 
 function unknownReply(text) {
 
-  const clean = text.trim();
+  const clean = normalize(text);
 
-  // Question-like message
   if (
-    clean.includes("?") ||
     clean.includes("কেন") ||
     clean.includes("কীভাবে") ||
     clean.includes("কিভাবে") ||
     clean.includes("কি") ||
-    clean.includes("কী")
+    clean.includes("কী") ||
+    text.includes("?") ||
+    text.includes("؟")
   ) {
 
     return random([
@@ -775,7 +634,6 @@ function unknownReply(text) {
   }
 
 
-  // Personal statement
   if (
     clean.includes("আমি") ||
     clean.includes("আমার") ||
@@ -795,7 +653,6 @@ function unknownReply(text) {
   }
 
 
-  // Group-related conversation
   if (
     clean.includes("ভাই") ||
     clean.includes("bro") ||
@@ -812,79 +669,18 @@ function unknownReply(text) {
   }
 
 
-  // General fallback
   return random(R.unknown);
 }
 
 
 // =========================================================
-// MAIN SMART DETECTOR
-// =========================================================
-
-function detect(text) {
-
-  const q = normalize(text);
-
-  if (!q) {
-    return null;
-  }
-
-
-  // First priority: exact conversational intents
-
-  const basic = detectBasic(q);
-
-  if (basic) {
-
-    return {
-      reply: random(R[basic.category]),
-      category: basic.category,
-      confidence: basic.confidence
-    };
-
-  }
-
-
-  // Second priority: topic detection
-
-  const topic = detectTopic(text);
-
-  if (topic) {
-
-    const replies = R[topic.category];
-
-    if (replies && replies.length) {
-
-      return {
-        reply: random(replies),
-        category: topic.category,
-        confidence: Math.min(topic.score + 1, 5)
-      };
-
-    }
-
-  }
-
-
-  // Third priority: unknown/contextual reply
-
-  return {
-    reply: unknownReply(text),
-    category: "unknown",
-    confidence: 1
-  };
-}
-
-
-// =========================================================
-// SHOULD REPLY TO UNKNOWN MESSAGE?
+// UNKNOWN REPLY CHANCE
 // =========================================================
 
 function shouldReplyUnknown(text) {
 
   const q = normalize(text);
 
-  // Direct conversational signals
   const signals = [
     "আমি",
     "আমার",
@@ -916,8 +712,6 @@ function shouldReplyUnknown(text) {
 
   }
 
-
-  // Question mark
   if (
     text.includes("?") ||
     text.includes("؟")
@@ -925,35 +719,123 @@ function shouldReplyUnknown(text) {
     return true;
   }
 
-
-  /*
-   * Unknown random messages:
-   * only occasionally reply so group does not get spammed.
-   */
-  return Math.random() < 0.12;
+  return Math.random() < 0.08;
 }
 
 
 // =========================================================
-// EVENT
+// MAIN DETECTOR
 // =========================================================
 
-module.exports.handleEvent = async function ({
-  api,
-  event
-}) {
+function detect(text) {
+
+  const q = normalize(text);
+
+  if (!q) return null;
+
+
+  // Basic intent first
+  const basic = detectBasic(q);
+
+  if (basic) {
+
+    return {
+      reply: random(R[basic.category]),
+      category: basic.category,
+      confidence: basic.confidence
+    };
+
+  }
+
+
+  // Topic
+  const topic = detectTopic(text);
+
+  if (topic) {
+
+    const replies = R[topic.category];
+
+    if (replies && replies.length) {
+
+      return {
+        reply: random(replies),
+        category: topic.category,
+        confidence: Math.min(topic.score + 1, 5)
+      };
+
+    }
+
+  }
+
+
+  // Unknown
+  return {
+    reply: unknownReply(text),
+    category: "unknown",
+    confidence: 1
+  };
+}
+
+
+// =========================================================
+// CLEAN OLD MEMORY
+// =========================================================
+
+function cleanupMemory() {
+
+  const now = Date.now();
+
+  for (const [key, time] of cooldowns) {
+
+    if (now - time > 10 * 60 * 1000) {
+      cooldowns.delete(key);
+    }
+
+  }
+
+  for (const [key, time] of threadCooldowns) {
+
+    if (now - time > 10 * 60 * 1000) {
+      threadCooldowns.delete(key);
+    }
+
+  }
+
+  // Prevent unlimited memory growth
+  if (users.size > 5000) {
+
+    const firstKeys = Array.from(users.keys()).slice(0, 1000);
+
+    for (const key of firstKeys) {
+      users.delete(key);
+    }
+
+  }
+
+}
+
+setInterval(cleanupMemory, 5 * 60 * 1000);
+
+
+// =========================================================
+// EVENT HANDLER
+// =========================================================
+
+module.exports.handleEvent = async function ({ api, event }) {
 
   try {
+
+    if (!api || !event) return;
 
     if (!event.body) return;
     if (!event.threadID) return;
     if (!event.senderID) return;
 
-    const text = event.body.trim();
+    const text = String(event.body).trim();
 
     if (!text) return;
 
-    // Ignore very long messages
+    // Long message ignore
     if (text.length > 300) return;
 
 
@@ -967,25 +849,11 @@ module.exports.handleEvent = async function ({
     }
 
 
-    // Ignore bot-generated style messages
-    if (
-      text.startsWith("Tum Dum:") ||
-      text.startsWith("BOT:")
-    ) {
-      return;
-    }
-
-
-    /*
-     * If directly talking to the bot,
-     * baby.js can handle it.
-     *
-     * This prevents baby.js + autoreply.js
-     * from replying twice.
-     */
-
     const lower = text.toLowerCase();
 
+
+    // Ignore bot/direct-chat messages
+    // Let baby/chat module handle those.
     if (
       lower.startsWith("tum dum ") ||
       lower.startsWith("tumdum ") ||
@@ -999,12 +867,21 @@ module.exports.handleEvent = async function ({
     }
 
 
+    // Prevent self-generated replies
+    if (
+      lower.startsWith("tum dum:") ||
+      lower.startsWith("bot:")
+    ) {
+      return;
+    }
+
+
     const result = detect(text);
 
     if (!result) return;
 
 
-    // Unknown messages need extra protection
+    // Unknown messages get stricter filtering
     if (
       result.category === "unknown" &&
       !shouldReplyUnknown(text)
@@ -1013,11 +890,11 @@ module.exports.handleEvent = async function ({
     }
 
 
+    // Cooldown
     if (
       !canReply(
         event.threadID,
         event.senderID,
-        result.category,
         result.confidence
       )
     ) {
@@ -1031,21 +908,18 @@ module.exports.handleEvent = async function ({
     );
 
 
-    /*
-     * Prevent exact duplicate response
-     */
-
+    // Prevent same reply twice in a row
     let finalReply = result.reply;
 
-    if (
-      user.lastReply === finalReply
-    ) {
+    if (user.lastReply === finalReply) {
 
-      const alternatives = R[result.category] || R.unknown;
+      const alternatives =
+        R[result.category] || R.unknown;
 
-      const different = alternatives.filter(
-        x => x !== user.lastReply
-      );
+      const different =
+        alternatives.filter(
+          reply => reply !== user.lastReply
+        );
 
       if (different.length) {
         finalReply = random(different);
@@ -1054,54 +928,58 @@ module.exports.handleEvent = async function ({
     }
 
 
-    /*
-     * Save memory
-     */
-
+    // Save memory
     user.lastText = text;
     user.lastReply = finalReply;
     user.lastCategory = result.category;
     user.messages++;
 
 
-    /*
-     * Human-like delay
-     */
-
-    let delay;
-
-    if (result.confidence >= 4) {
-
-      delay =
-        Math.floor(Math.random() * 900) + 600;
-
-    } else {
-
-      delay =
-        Math.floor(Math.random() * 1500) + 900;
-
-    }
+    // Human-like delay
+    const delay =
+      result.confidence >= 4
+        ? Math.floor(Math.random() * 700) + 500
+        : Math.floor(Math.random() * 1000) + 800;
 
 
-    setTimeout(() => {
+    setTimeout(async () => {
 
       try {
 
-        api.sendMessage(
+        await api.sendMessage(
           finalReply,
-          event.threadID,
-          event.messageID
+          event.threadID
         );
 
-      } catch (err) {
-        // Silent
+      } catch (error) {
+
+        // Silent error
+
       }
 
     }, delay);
 
 
   } catch (error) {
+
     // Silent error
+
   }
+
+};
+
+
+// =========================================================
+// OPTIONAL RUN HANDLER
+// =========================================================
+// Some bot frameworks call run() for event modules.
+// Keeping this makes the module more compatible.
+
+module.exports.run = async function ({ api, event }) {
+
+  return module.exports.handleEvent({
+    api,
+    event
+  });
 
 };
