@@ -35,6 +35,8 @@ module.exports.handleEvent = async function ({ api, event }) {
     "sadiya" : "সাদিয়া কে ডেকো না ফুস করে দিবে",
      "sabab" : " সাবাব, বেবী কাছে আসো 🙄",
 
+ "sabab": "আলু আলু আলু কখনো বেগুন হবে না🤧",
+
 "ফারাজ" : "বদ্দা এর রক্ত চানা এর খুব পছন্দ 🫣",
 
     "চানা" : "its sanaaaaaaaaaaaa 😒",
