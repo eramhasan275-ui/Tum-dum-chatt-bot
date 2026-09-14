@@ -1,77 +1,89 @@
 const { spawn } = require("child_process");
 const axios = require("axios");
 const logger = require("./utils/log");
-
-///////////////////////////////////////////////////////////
-//========= Create website for dashboard/uptime =========//
-///////////////////////////////////////////////////////////
-
-const express = require('express');
-const path = require('path');
+const express = require("express");
+const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Serve the index.html file
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '/index.html'));
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Start the server and add error handling
 app.listen(port, () => {
     logger(`Server is running on port ${port}...`, "[ Starting ]");
-}).on('error', (err) => {
-    if (err.code === 'EACCES') {
-        logger(`Permission denied. Cannot bind to port ${port}.`, "[ Error ]");
-    } else {
-        logger(`Server error: ${err.message}`, "[ Error ]");
-    }
+}).on("error", err => {
+    logger(`Server error: ${err.message}`, "[ Error ]");
 });
 
-/////////////////////////////////////////////////////////
-//========= Create start bot and make it loop =========//
-/////////////////////////////////////////////////////////
+let restarting = false;
+let restartDelay = 10000;
+let child = null;
 
-// Initialize global restart counter
-global.countRestart = global.countRestart || 0;
+function startBot() {
+    if (restarting) return;
 
-function startBot(message) {
-    if (message) logger(message, "[ Starting ]");
+    restarting = true;
 
-    const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "Main.js"], {
-        cwd: __dirname,
-        stdio: "inherit",
-        shell: true
-    });
+    logger("Starting Tum Dum...", "[ Bot ]");
 
-    child.on("close", (codeExit) => {
-        if (codeExit !== 0 && global.countRestart < 5) {
-            global.countRestart += 1;
-            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Restarting ]");
-            startBot();
-        } else {
-            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Stopped ]");
+    child = spawn(
+        process.execPath,
+        ["--trace-warnings", "--async-stack-traces", "Main.js"],
+        {
+            cwd: __dirname,
+            stdio: "inherit",
+            shell: false,
+            env: process.env
         }
+    );
+
+    child.on("spawn", () => {
+        restarting = false;
+        restartDelay = 10000;
+        logger("Tum Dum process started.", "[ Success ]");
     });
 
-    child.on("error", (error) => {
-        logger(`An error occurred: ${JSON.stringify(error)}`, "[ Error ]");
+    child.on("error", err => {
+        logger(`Bot process error: ${err.message}`, "[ Error ]");
     });
-};
 
-////////////////////////////////////////////////
-//========= Check update from Github =========//
-////////////////////////////////////////////////
+    child.on("close", code => {
+        child = null;
+        restarting = false;
 
-axios.get("https://raw.githubusercontent.com/shahadat-sahu/SHAHADAT-CHAT-BOT/main/package.json")
-    .then((res) => {
-        logger(res.data.name, "[ NAME ]");
-        logger(`Version: ${res.data.version}`, "[ VERSION ]");
-        logger(res.data.description, "[ DESCRIPTION ]");
+        logger(
+            `Bot process stopped with code ${code}.`,
+            "[ Warning ]"
+        );
+
+        setTimeout(() => {
+            startBot();
+        }, restartDelay);
+
+        restartDelay = Math.min(restartDelay * 2, 60000);
+    });
+}
+
+process.on("uncaughtException", err => {
+    logger(`Sahu error: ${err.stack || err}`, "[ Error ]");
+});
+
+process.on("unhandledRejection", err => {
+    logger(`Unhandled rejection: ${err?.stack || err}`, "[ Error ]");
+});
+
+axios
+    .get("https://raw.githubusercontent.com/eramhasan275-ui/Tum-dum-chatt-bot/main/package.json", {
+        timeout: 15000
     })
-    .catch((err) => {
-        logger(`Failed to fetch update info: ${err.message}`, "[ Update Error ]");
+    .then(res => {
+        logger(res.data?.name || "Tum Dum", "[ NAME ]");
+        logger(`Version: ${res.data?.version || "2.0.1"}`, "[ VERSION ]");
+    })
+    .catch(() => {
+        logger("Update information unavailable.", "[ Info ]");
     });
 
-// Start the bot
 startBot();
