@@ -18,7 +18,7 @@ module.exports.handleEvent = async function ({ api, event }) {
   const { threadID, messageID, body, senderID } = event;
   if (!body) return;
 
-  const msg = body.toLowerCase().trim();
+  const msg = body.trim().toLowerCase();
 
   const responses = {
     "miss you": "অরেক বেডারে Miss না করে xan মেয়ে হলে আমাকে ইনবক্স করো ইরাম যেনো না জানে তাহলে কোট দিবে😶👻😘",
@@ -31,16 +31,18 @@ module.exports.handleEvent = async function ({ api, event }) {
     "👍": "সর এখান থেকে লাইকার আবাল..!🐸🤣👍⛏️",
     "hi": "এত হাই-হ্যালো কর ক্যান প্রিও..!😜🫵",
     "adira": "অটো টুন সেটা আবার কি🙂🌚👊🏻",
-      "Lisan 1": "সাবাব বেবী রাতে ভিডু কল দিও💋",
-"anu": "আরেহ জানু 🥹",
-   "lisan": "আমি lisan বেবী vastagana uiya🌚",
+    "lisan 1": "সাবাব বেবী রাতে ভিডু -\nকল দিও💋",
+    "anu": "আরেহ জানু 🥹",
+    "lisan": "আমি lisan বেবী vastagana uiya🌚",
 
+    "kamrul": "sadiyaaa আমাকে ভেঙে -\n কোথায় গেলে হারিয়া 🥹",
+    "minhaj": " এক সময় আমার লেবুর থেকে বাজারের লেবু বেশি দামি ছিল। এই লেবু সেই লেবু না 🌚👊🏻",
     "adira 1": "আসসালামু আলাইকুম 🤍-\nকেমন আছেন সবাই ?",
 
     "sadiya": "সাদিয়া কে ডেকো না ফুস করে দিবে",
     "sabab1": "সাবাব, বেবী কাছে আসো 🙄",
-  
-";⁠)": "rongless happy guy ;⁠)",
+
+    ";⁠)": "rongless happy guy ;⁠)",
 
     "faraz 1": "ফারাজ ভদ্র ছেলে না তেলে না ঝোলে 🙉",
 
@@ -102,20 +104,25 @@ module.exports.handleEvent = async function ({ api, event }) {
     "love": "আমি তোমাকে ভালোবাসি জান😻🔥"
   };
 
-  if (!responses[msg]) return;
+  // বাংলা/ইংরেজি key দুটোই ঠিকভাবে খুঁজে বের করবে
+  const responseKey = Object.keys(responses).find(
+    key => key.trim().toLowerCase() === msg
+  );
+
+  if (!responseKey) return;
 
   if (!global.client.handleReply) {
     global.client.handleReply = [];
   }
 
   return api.sendMessage(
-    responses[msg],
+    responses[responseKey],
     threadID,
     (err, info) => {
       if (err || !info) return;
 
       global.client.handleReply.push({
-        name: this.config.name,
+        name: module.exports.config.name,
         messageID: info.messageID,
         author: senderID,
         type: "sahu"
