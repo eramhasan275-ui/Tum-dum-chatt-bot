@@ -1,89 +1,77 @@
 const { spawn } = require("child_process");
 const axios = require("axios");
 const logger = require("./utils/log");
-const express = require("express");
-const path = require("path");
+
+///////////////////////////////////////////////////////////
+//========= Create website for dashboard/uptime =========//
+///////////////////////////////////////////////////////////
+
+const express = require('express');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
+// Serve the index.html file
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, '/index.html'));
 });
 
+// Start the server and add error handling
 app.listen(port, () => {
     logger(`Server is running on port ${port}...`, "[ Starting ]");
-}).on("error", err => {
-    logger(`Server error: ${err.message}`, "[ Error ]");
+}).on('error', (err) => {
+    if (err.code === 'EACCES') {
+        logger(`Permission denied. Cannot bind to port ${port}.`, "[ Error ]");
+    } else {
+        logger(`Server error: ${err.message}`, "[ Error ]");
+    }
 });
 
-let restarting = false;
-let restartDelay = 10000;
-let child = null;
+/////////////////////////////////////////////////////////
+//========= Create start bot and make it loop =========//
+/////////////////////////////////////////////////////////
 
-function startBot() {
-    if (restarting) return;
+// Initialize global restart counter
+global.countRestart = global.countRestart || 0;
 
-    restarting = true;
+function startBot(message) {
+    if (message) logger(message, "[ Starting ]");
 
-    logger("Starting Tum Dum...", "[ Bot ]");
-
-    child = spawn(
-        process.execPath,
-        ["--trace-warnings", "--async-stack-traces", "Main.js"],
-        {
-            cwd: __dirname,
-            stdio: "inherit",
-            shell: false,
-            env: process.env
-        }
-    );
-
-    child.on("spawn", () => {
-        restarting = false;
-        restartDelay = 10000;
-        logger("Tum Dum process started.", "[ Success ]");
+    const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "Main.js"], {
+        cwd: __dirname,
+        stdio: "inherit",
+        shell: true
     });
 
-    child.on("error", err => {
-        logger(`Bot process error: ${err.message}`, "[ Error ]");
-    });
-
-    child.on("close", code => {
-        child = null;
-        restarting = false;
-
-        logger(
-            `Bot process stopped with code ${code}.`,
-            "[ Warning ]"
-        );
-
-        setTimeout(() => {
+    child.on("close", (codeExit) => {
+        if (codeExit !== 0 && global.countRestart < 5) {
+            global.countRestart += 1;
+            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Restarting ]");
             startBot();
-        }, restartDelay);
-
-        restartDelay = Math.min(restartDelay * 2, 60000);
-    });
-}
-
-process.on("uncaughtException", err => {
-    logger(`Sahu error: ${err.stack || err}`, "[ Error ]");
-});
-
-process.on("unhandledRejection", err => {
-    logger(`Unhandled rejection: ${err?.stack || err}`, "[ Error ]");
-});
-
-axios
-    .get("https://raw.githubusercontent.com/eramhasan275-ui/Tum-dum-chatt-bot/main/package.json", {
-        timeout: 15000
-    })
-    .then(res => {
-        logger(res.data?.name || "Tum Dum", "[ NAME ]");
-        logger(`Version: ${res.data?.version || "2.0.1"}`, "[ VERSION ]");
-    })
-    .catch(() => {
-        logger("Update information unavailable.", "[ Info ]");
+        } else {
+            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Stopped ]");
+        }
     });
 
+    child.on("error", (error) => {
+        logger(`An error occurred: ${JSON.stringify(error)}`, "[ Error ]");
+    });
+};
+
+////////////////////////////////////////////////
+//========= Check update from Github =========//
+////////////////////////////////////////////////
+
+axios.get("https://raw.githubusercontent.com/shahadat-sahu/SHAHADAT-CHAT-BOT/main/package.json")
+    .then((res) => {
+        logger(res.data.name, "[ NAME ]");
+        logger(`Version: ${res.data.version}`, "[ VERSION ]");
+        logger(res.data.description, "[ DESCRIPTION ]");
+    })
+    .catch((err) => {
+        logger(`Failed to fetch update info: ${err.message}`, "[ Update Error ]");
+    });
+
+// Start the bot
 startBot();
