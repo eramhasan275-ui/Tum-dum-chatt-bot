@@ -35,6 +35,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "anu": "আরেহ জানু 🥹",
     "lisan": "আমি lisan বেবী vastagana uiya🌚",
 
+"tina": "টিনা পাদে পু পু 🙊",
     "kamrul": "sadiyaaa আমাকে ভেঙে -\n কোথায় গেলে হারিয়া 🥹",
     "minhaj": " এক সময় আমার লেবুর থেকে বাজারের লেবু বেশি দামি ছিল। এই লেবু সেই লেবু না 🌚👊🏻",
     "adira 1": "আসসালামু আলাইকুম 🤍-\nকেমন আছেন সবাই ?",
