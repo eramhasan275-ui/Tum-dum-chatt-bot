@@ -39,14 +39,11 @@ module.exports.run = async function ({ api, event }) {
 `;
 
   cons[
-    "https://gcom/gokzyKd.jpeg",
-   m "https://i.imgur.com/g3hlQ0Z.jpeg",
-    "hr.com/L7txp4M.jpeg",
-    "https://i.eg"
+    "htt
  
 
   const randomImg =
-    images[Math.floor(Math.random() * images.length)];
+    ima)];
 
   const cacheDir = __dirname + "/cache";
   const imagePa
