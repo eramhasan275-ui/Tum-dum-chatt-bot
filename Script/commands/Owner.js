@@ -38,18 +38,18 @@ module.exports.run = async function ({ api, event }) {
 🤖 𝗧𝘂𝗺 𝗗𝘂𝗺 𝗕𝗼𝘁
 `;
 
-  const images = [
-    "https://i.imgur.com/gokzyKd.jpeg",
-    "https://i.imgur.com/g3hlQ0Z.jpeg",
-    "https://i.imgur.com/L7txp4M.jpeg",
-    "https://i.imgur.com/5dG8PS5.jpeg"
-  ];
+  cons[
+    "https://gcom/gokzyKd.jpeg",
+   m "https://i.imgur.com/g3hlQ0Z.jpeg",
+    "hr.com/L7txp4M.jpeg",
+    "https://i.eg"
+ 
 
   const randomImg =
     images[Math.floor(Math.random() * images.length)];
 
   const cacheDir = __dirname + "/cache";
-  const imagePath = cacheDir + "/owner.jpg";
+  const imagePa
 
   fs.ensureDirSync(cacheDir);
 
