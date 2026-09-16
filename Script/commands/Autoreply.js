@@ -43,7 +43,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "sadiya": "সাদিয়া কে ডেকো না ফুস করে দিবে",
     "sabab1": "সাবাব, বেবী কাছে আসো 🙄",
 
-    ";⁠)": "rongless happy guy ;⁠)",
+    ":)": "rongless happy guy ;⁠)",
 
     "faraz 1": "ফারাজ ভদ্র ছেলে না তেলে না ঝোলে 🙉",
 
