@@ -1,79 +1,131 @@
-/**
- * Tum Dum - Group Welcome
- * Owner: Eram
- */
-
 module.exports.config = {
-    name: "joinnoti",
-    version: "2.0.0",
-    hasPermssion: 0,
-    credits: "Eram",
-    description: "Welcomes new members when they join the group",
-    commandCategory: "Events",
-    usages: "",
-    cooldowns: 0,
-    eventType: ["log:subscribe"]
+  name: "joinnoti",
+  eventType: ["log:subscribe"],
+  version: "1.0.0",
+  credits: "SHAHADAT SAHU",
+  description: "Welcome message with optional image/video",
+  dependencies: {
+    "fs-extra": "",
+    "path": ""
+  }
 };
 
-module.exports.run = async function ({ api, event }) {
-    try {
-        const {
-            threadID,
-            logMessageData
-        } = event;
+module.exports.onLoad = function () {
+  const { existsSync, mkdirSync } = global.nodemodule["fs-extra"];
+  const { join } = global.nodemodule["path"];
+  const paths = [
+    join(__dirname, "cache", "joinGif"),
+    join(__dirname, "cache", "randomgif")
+  ];
+  for (const path of paths) {
+    if (!existsSync(path)) mkdirSync(path, { recursive: true });
+  }
+};
 
-        if (!logMessageData) return;
+module.exports.run = async function({ api, event }) {
+  const fs = require("fs");
+  const path = require("path");
+  const { threadID } = event;
+  
+  const botPrefix = global.config.PREFIX || "/";
+  const botName = global.config.BOTNAME || "𝗦𝗵𝗮𝗵𝗮𝗱𝗮𝘁 𝗖𝗵𝗮𝘁 𝗕𝗼𝘁";
 
-        const addedParticipants =
-            logMessageData.addedParticipants || [];
+ 
+  if (event.logMessageData.addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
+    await api.changeNickname(`[ ${botPrefix} ] • ${botName}`, threadID, api.getCurrentUserID());
 
-        if (addedParticipants.length === 0) return;
+    api.sendMessage("চলে এসেছি Tum Dum 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭 এখন তোমাদের সাথে আড্ডা দিব!", threadID, () => {
+      const randomGifPath = path.join(__dirname, "cache", "randomgif");
+      const allFiles = fs.readdirSync(randomGifPath).filter(file =>
+        [".mp4", ".jpg", ".png", ".jpeg", ".gif", ".mp3"].some(ext => file.endsWith(ext))
+      );
 
-        let groupName = "এই গ্রুপ";
+      const selected = allFiles.length > 0 
+        ? fs.createReadStream(path.join(randomGifPath, allFiles[Math.floor(Math.random() * allFiles.length)])) 
+        : null;
 
-        try {
-            const threadInfo =
-                await api.getThreadInfo(threadID);
+      const messageBody = `╭•┄┅═══❁🌟❁═══┅┄•╮
+     আসসালামু আলাইকুম 💙
+╰•┄┅═══❁🌟❁═══┅┄•╯
 
-            if (threadInfo && threadInfo.threadName) {
-                groupName = threadInfo.threadName;
-            }
-        } catch (error) {
-            // Group name পাওয়া না গেলে default name ব্যবহার হবে
-        }
+𝐓𝐡𝐚𝐧𝐤 𝐲𝐨𝐮 𝐬𝐨 𝐦𝐮𝐜𝐡 𝐟𝐨𝐫 𝐚𝐝𝐝𝐢𝐧𝐠 𝐦𝐞 𝐭𝐨 𝐲𝐨𝐮𝐫 𝐢-𝐠𝐫𝐨𝐮𝐩-🖤🤗
 
-        for (const user of addedParticipants) {
 
-            const name =
-                user.fullName || "নতুন সদস্য";
+𝐓𝐨 𝐯𝐢𝐞𝐰 𝐚𝐧𝐲 𝐜𝐨𝐦𝐦𝐚𝐧𝐝:
+${botPrefix}Help
+${botPrefix}Info
+${botPrefix}Admin
 
-            const message =
-`╭───────────────╮
-   🌿 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 🌿
-╰───────────────╯
+★ যেকোনো অভিযোগ অথবা হেল্প এর জন্য এডমিন 𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 কে নক করতে পারেন ★
 
-স্বাগতম, ${name} 🤍
+➤𝐖𝐡𝐚𝐭𝐬𝐀𝐩𝐩: https://wa.me/8801922361823
 
-আপনাকে ${groupName}-এ
-আন্তরিকভাবে স্বাগতম।
+❖⋆═══════════════════════⋆❖
+          𝐁𝐨𝐭 𝐎𝐰𝐧𝐞𝐫 ➢ Eram hasan`;
 
-🌱 গ্রুপের সকল নিয়ম মেনে চলবেন।
+      if (selected) {
+        api.sendMessage({ body: messageBody, attachment: selected }, threadID);
+      } else {
+        api.sendMessage(messageBody, threadID);
+      }
+    });
 
-───────────────
-🤖 Tum Dum
-👑 Owner: Eram
-───────────────`;
+    return;
+  }
 
-            await api.sendMessage(
-                message,
-                threadID
-            );
-        }
+ 
+  try {
+    const { createReadStream, readdirSync } = global.nodemodule["fs-extra"];
+    let { threadName, participantIDs } = await api.getThreadInfo(threadID);
+    const threadData = global.data.threadData.get(parseInt(threadID)) || {};
+    let mentions = [], nameArray = [], memLength = [], i = 0;
 
-    } catch (error) {
-        console.error(
-            "[Tum Dum Welcome] " +
-            error.message
-        );
+    for (let id in event.logMessageData.addedParticipants) {
+      const userName = event.logMessageData.addedParticipants[id].fullName;
+      nameArray.push(userName);
+      mentions.push({ tag: userName, id });
+      memLength.push(participantIDs.length - i++);
     }
+    memLength.sort((a, b) => a - b);
+
+    let msg = (typeof threadData.customJoin === "undefined") ? `╭•┄┅═══❁🌟❁═══┅┄•╮
+     আসসালামু আলাইকুম 💙
+╰•┄┅═══❁🌟❁═══┅┄•╯
+হাসি, মজা, ঠাট্টায় গড়ে উঠুক  
+চিরস্থায়ী বন্ধুত্বের বন্ধন।🥰
+
+➤ গ্রুপ এডমিনের কথা শুনবেন ও রুলস মেনে চলবেন।✅
+
+›› প্রিয় {name},  
+আপনি এই গ্রুপের {soThanhVien} নম্বর মেম্বার!
+
+›› গ্রুপ: {threadName}
+
+💌 🌺 𝐖 𝐄 𝐋 𝐂 𝐎 𝐌 𝐄 🌺 💌
+╭─╼╾─╼✨╾─╼╾───╮
+   Tum Dum𝐂𝐡𝐚𝐭 𝐁𝐨𝐭 🍁
+╰───╼╾─╼✨╾─╼╾─╯
+
+❖⋆══════════════════════════⋆❖` : threadData.customJoin;
+
+    msg = msg
+      .replace(/\{name}/g, nameArray.join(', '))
+      .replace(/\{soThanhVien}/g, memLength.join(', '))
+      .replace(/\{threadName}/g, threadName);
+
+    const joinGifPath = path.join(__dirname, "cache", "joinGif");
+    const files = readdirSync(joinGifPath).filter(file =>
+      [".mp4", ".jpg", ".png", ".jpeg", ".gif", ".mp3"].some(ext => file.endsWith(ext))
+    );
+    const randomFile = files.length > 0 
+      ? createReadStream(path.join(joinGifPath, files[Math.floor(Math.random() * files.length)])) 
+      : null;
+
+    return api.sendMessage(
+      randomFile ? { body: msg, attachment: randomFile, mentions } : { body: msg, mentions },
+      threadID
+    );
+  } catch (e) {
+    console.error(e);
+  }
 };
