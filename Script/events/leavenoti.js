@@ -1,111 +1,43 @@
 module.exports.config = {
   name: "leave",
   eventType: ["log:unsubscribe"],
-  version: "2.0.0",
-  credits: "Eram",
-  description: "Group leave notification",
+  version: "1.0.0",
+  credits: "SHAHADAT SAHU",
+  description: "Thông báo bot hoặc người rời khỏi nhóm",
   dependencies: {
     "fs-extra": "",
     "path": ""
   }
 };
 
-module.exports.run = async function({
-  api,
-  event,
-  Users,
-  Threads
-}) {
-  try {
-    // Bot নিজে group থেকে বের হলে কোনো message পাঠাবে না
-    if (
-      event.logMessageData.leftParticipantFbId ===
-      api.getCurrentUserID()
-    ) {
-      return;
-    }
+module.exports.run = async function({ api, event, Users, Threads }) {
+  if (event.logMessageData.leftParticipantFbId == api.getCurrentUserID()) return;
 
-    const {
-      createReadStream,
-      existsSync,
-      mkdirSync
-    } = global.nodemodule["fs-extra"];
+  const { createReadStream, existsSync, mkdirSync } = global.nodemodule["fs-extra"];
+  const { join } = global.nodemodule["path"];
+  const { threadID } = event;
 
-    const { join } = global.nodemodule["path"];
+  const data = global.data.threadData.get(parseInt(threadID)) || (await Threads.getData(threadID)).data;
+  const name = global.data.userName.get(event.logMessageData.leftParticipantFbId) || await Users.getNameUser(event.logMessageData.leftParticipantFbId);
 
-    const { threadID } = event;
+  const type = (event.author == event.logMessageData.leftParticipantFbId)
+    ? " তোর সাহস কম না  গ্রুপের এডমিনের পারমিশন ছাড়া তুই লিভ  নিস😡😠🤬 \n✦Tum Dum✦"
+    : "তোমার এই গ্রুপে থাকার কোনো যোগ্যাতা নেই ছাগল😡\nতাই তোমাকে লাথি মেরে গ্রুপ থেকে বের করে দেওয়া হলো🤪 WELLCOME REMOVE🤧\n✦Tum Dum Tedao✦";
 
-    const data =
-      global.data.threadData.get(parseInt(threadID)) ||
-      (await Threads.getData(threadID)).data;
+  const path = join(__dirname, "Shahadat", "leaveGif");
+  const gifPath = join(path, `leave1.gif`);
 
-    const userID =
-      event.logMessageData.leftParticipantFbId;
+  if (!existsSync(path)) mkdirSync(path, { recursive: true });
 
-    const name =
-      global.data.userName.get(userID) ||
-      await Users.getNameUser(userID);
+  let msg = (typeof data.customLeave == "undefined")
+    ? "ইস {name} {type} "
+    : data.customLeave;
 
-    // নিজে নিজে leave করলে
-    const type =
-      event.author === userID
-        ? "নিজেই গ্রুপ থেকে বের হয়ে গেছেন।"
-        : "গ্রুপ থেকে সরিয়ে দেওয়া হয়েছে।";
+  msg = msg.replace(/\{name}/g, name).replace(/\{type}/g, type);
 
-    const cachePath =
-      join(__dirname, "cache", "leaveGif");
+  const formPush = existsSync(gifPath)
+    ? { body: msg, attachment: createReadStream(gifPath) }
+    : { body: msg };
 
-    const gifPath =
-      join(cachePath, "leave1.gif");
-
-    if (!existsSync(cachePath)) {
-      mkdirSync(cachePath, {
-        recursive: true
-      });
-    }
-
-    let msg =
-      typeof data.customLeave === "undefined"
-        ? `╭───────────────╮
-   🌿 𝐋𝐄𝐅𝐓 𝐍𝐎𝐓𝐈𝐅𝐈𝐂𝐀𝐓𝐈𝐎𝐍
-╰───────────────╯
-
-👤 ${name}
-
-${type}
-
-গ্রুপে থাকার 
-যোগ্যতা নাই 😂👊🏻
-
-───────────────
-🤖 Tum Dum
-👑 Owner: Eram
-───────────────`
-        : data.customLeave;
-
-    msg = msg
-      .replace(/\{name}/g, name)
-      .replace(/\{type}/g, type);
-
-    const formPush =
-      existsSync(gifPath)
-        ? {
-            body: msg,
-            attachment: createReadStream(gifPath)
-          }
-        : {
-            body: msg
-          };
-
-    return api.sendMessage(
-      formPush,
-      threadID
-    );
-
-  } catch (error) {
-    console.error(
-      "[Tum Dum Leave] " +
-      error.message
-    );
-  }
+  return api.sendMessage(formPush, threadID);
 };
