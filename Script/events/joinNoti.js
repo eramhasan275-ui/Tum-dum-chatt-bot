@@ -85,9 +85,9 @@ ${botPrefix}Admin
     }
     memLength.sort((a, b) => a - b);
 
-    let msg = (typeof threadData.customJoin === "undefined") ? `╭•┄┅═══❁🌟❁═══┅┄•╮
-     আসসালামু আলাইকুম 💙
-╰•┄┅═══❁🌟❁═══┅┄•╯
+    let msg = (typeof threadData.customJoin === "undefined") ? `
+     
+
 হাসি, মজা, ঠাট্টায় গড়ে উঠুক  
 চিরস্থায়ী বন্ধুত্বের বন্ধন।🥰
 
