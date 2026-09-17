@@ -2,6 +2,10 @@ const { spawn } = require("child_process");
 const axios = require("axios");
 const logger = require("./utils/log");
 
+///////////////////////////////////////////////////////////
+//========= Create website for dashboard/uptime =========//
+///////////////////////////////////////////////////////////
+
 const express = require("express");
 const path = require("path");
 
@@ -9,80 +13,61 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 app.get("/", function (req, res) {
-res.sendFile(path.join(__dirname, "index.html"));
+res.sendFile(path.join(__dirname, "/index.html"));
 });
 
-const server = app.listen(port, () => {
+app.listen(port, () => {
 logger("Server is running on port ${port}...", "[ Starting ]");
-});
-
-server.on("error", (err) => {
+}).on("error", (err) => {
 logger("Server error: ${err.message}", "[ Error ]");
 });
 
-let restarting = false;
-let childProcess = null;
+/////////////////////////////////////////////////////////
+//========= Create start bot and make it loop =========//
+/////////////////////////////////////////////////////////
 
 function startBot(message) {
 if (message) {
 logger(message, "[ Starting ]");
 }
 
-if (childProcess && !childProcess.killed) {
-    return;
-}
-
-restarting = false;
-
-childProcess = spawn(
-    process.execPath,
+const child = spawn(
+    "node",
     ["--trace-warnings", "--async-stack-traces", "Main.js"],
     {
         cwd: __dirname,
         stdio: "inherit",
-        shell: false
+        shell: true
     }
 );
 
-childProcess.on("error", (error) => {
-    logger(`Bot process error: ${error.message}`, "[ Error ]");
-});
-
-childProcess.on("exit", (code, signal) => {
-    childProcess = null;
-
+child.on("close", (codeExit) => {
     logger(
-        `Bot exited. Code: ${code}, Signal: ${signal || "none"}`,
-        "[ Warning ]"
+        `Bot exited with code ${codeExit}. Restarting in 5 seconds...`,
+        "[ Restarting ]"
     );
 
-    if (!restarting) {
-        restarting = true;
+    setTimeout(() => {
+        startBot();
+    }, 5000);
+});
 
-        setTimeout(() => {
-            logger("Starting bot again...", "[ Restarting ]");
-            startBot();
-        }, 5000);
-    }
+child.on("error", (error) => {
+    logger(
+        `An error occurred: ${error.message}`,
+        "[ Error ]"
+    );
 });
 
 }
 
-process.on("uncaughtException", (error) => {
-logger("Uncaught Exception: ${error.stack || error.message}", "[ Error ]");
-});
-
-process.on("unhandledRejection", (reason) => {
-logger(
-"Unhandled Rejection: ${ reason && reason.stack ? reason.stack : reason }",
-"[ Error ]"
-);
-});
+////////////////////////////////////////////////
+//========= Check update from Github =========//
+////////////////////////////////////////////////
 
 axios
 .get(
-"https://raw.githubusercontent.com/eramhasan275-ui/Tum-dum-chatt-bot/main/package.json",
-{ timeout: 10000 }
+"https://raw.githubusercontent.com/eramhasan275-ui/Tum-dum-chatt-bot/main/package.json"
 )
 .then((res) => {
 if (res.data) {
@@ -95,7 +80,14 @@ res.data.description || "Tum Dum Chat Bot",
 }
 })
 .catch((err) => {
-logger("Update check skipped: ${err.message}", "[ Update ]");
+logger(
+"Failed to fetch update info: ${err.message}",
+"[ Update Error ]"
+);
 });
+
+////////////////////////////////////////////////
+//================ Start Bot =================//
+////////////////////////////////////////////////
 
 startBot();
